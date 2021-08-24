@@ -62,5 +62,3 @@ function wc_get_container() : \Psr\Container\ContainerInterface {
 $GLOBALS['woocommerce'] = WC();
 
 
-
-
