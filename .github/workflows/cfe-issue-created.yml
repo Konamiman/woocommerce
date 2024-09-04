@@ -10,5 +10,8 @@ jobs:
     permissions:
       issues: write
     steps:
+      - name: Setup WooCommerce Monorepo
+        uses: ./.github/actions/setup-woocommerce-monorepo
+
       - name: Add comment
         run: 'pnpm utils slack message ${{ secrets.SLACK_TOKEN }} \"CFE issue created! The thing: ${{ toJson(github) }}\" general'
