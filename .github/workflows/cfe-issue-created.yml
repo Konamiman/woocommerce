@@ -1,0 +1,14 @@
+name: Notify of CFE issue created
+on:
+  issues:
+    types:
+      - labeled
+jobs:
+  add-comment:
+    if: github.event.label.name == 'code freeze exception'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Add comment
+        run: 'pnpm utils slack message ${{ secrets.SLACK_TOKEN }} \"CFE issue created! The thing: ${{ toJson(github) }}\" general'
