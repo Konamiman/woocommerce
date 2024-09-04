@@ -42,7 +42,7 @@ body:
     id: why-needed
     attributes:
       label: "Why do these PRs need to break the code freeze?"
-      placeholder: "This is a revert of ... which introcuded a bug that causes ..."
+      placeholder: "This is a revert of ... which introduced a bug that causes ..."
     validations:
       required: true
   - type: textarea
