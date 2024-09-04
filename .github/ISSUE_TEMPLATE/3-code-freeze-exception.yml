@@ -4,12 +4,13 @@ title: "[CFE]: "
 labels: ["code freeze exception"]
 body:
   - type: markdown
-    value: |
-      Use this template to request changes to be included in a version of WooCommerce that is past its code freeze date.
-      **The request will be reviewed** and accepted or denied:
-      * If accepted, a pull request targeting the appropriate release branch will be created.
-      * If rejected, a pull request targeting `trunk` will be created.
-      In either case you are responsible for managing the pull request as usual (provide a description, assign reviewers, ensure that CI jobs pass...)
+    attributes:
+      value: |
+        Use this template to request changes to be included in a version of WooCommerce that is past its code freeze date.
+        **The request will be reviewed** and accepted or denied:
+        * If accepted, a pull request targeting the appropriate release branch will be created.
+        * If rejected, a pull request targeting `trunk` will be created.
+        In either case you are responsible for managing the pull request as usual (provide a description, assign reviewers, ensure that CI jobs pass...)
   - type: input
     id: release-number
     attributes:
