@@ -17,4 +17,4 @@ jobs:
         uses: ./.github/actions/setup-woocommerce-monorepo
 
       - name: Add comment
-        run: 'pnpm utils slack message ${{ secrets.SLACK_TOKEN }} \"CFE issue created! The thing: ${{ toJson(github) }}\" general'
+        run: 'pnpm utils slack message ${{ secrets.SLACK_TOKEN }} "CFE issue created! The thing: ${{ toJson(github) }}" general'
