@@ -1,0 +1,70 @@
+name: 🚧 Code freeze exception request
+description: Request a the creation of pull request that will be handled as a code freeze exception.
+title: "[CFE]: "
+labels: ["code freeze exception"]
+body:
+  - type: input
+    attributes:
+      id: release-number
+      label: "Which release does this exception apply to?"
+      description: "Format: X.Y.Z"
+      placeholder: "9.7.0"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      id: pr-urls
+      label: "What PRs need to be cherry-picked into the release branch?"
+      description: "Pull request URLs, one per line"
+      placeholder: |
+        https://github.com/woocommerce/woocommerce/pull/1234
+        https://github.com/woocommerce/woocommerce/pull/5678
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      id: why-needed
+      label: "Why do these PRs need to break the code freeze?"
+      placeholder: "This is a revert of ... which introcuded a bug that causes ..."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      id: consequence-if-not-included
+      label: "What is the consequence if this exception does not get included?"
+      placeholder: "The ... flow will be broken for ... users"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      id: plan-if-defects-discovered
+      label: "What is the plan should defects to be discovered in these PRs ahead of final release?"
+      placeholder: "Reverting this PR and ... would be enough"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "How should this change be communicated in the release post on the [public developer blog](https://href.li/?https://developer.woo.com/blog/)?"
+      placeholder: "There is no need to add new communication to the already planned one."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "If you’re not available and we have questions about this request, is there another person(s) and/or a team that we can ping?"
+      plaheholder: "@person or anyone from the ... team"
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ## Escape Analysis
+
+        For the sake of expediting this request, the details below can be completed at a later time should you so choose.
+        However, the Escape Analysis section is **required** for any accepted Code Freeze Exception.
+
+        In this section:
+
+        * Think about how the bug escaped your team.
+        * Write down ideas on how you could prevent this bug – for example, by writing automated tests, creating a new process, or updating documentation.
+        * Make a plan with your team to implement the changes proposed above in order to catch the bug earlier next time and add the related tasks to your backlog.
+        * Please, add a separate comment that includes the details for the Escape Analysis. Together with this Escape Analysis, please make sure to include an actionable item that covers the gap exposed by this analysis. It could be a GitHub issue, the reference of a new item to discuss in a team meeting, etc. Anything that prevents this analysis from getting lost in P2 will be useful.
