@@ -4,16 +4,16 @@ title: "[CFE]: "
 labels: ["code freeze exception"]
 body:
   - type: input
+    id: release-number
     attributes:
-      id: release-number
       label: "Which release does this exception apply to?"
       description: "Format: X.Y.Z"
       placeholder: "9.7.0"
     validations:
       required: true
   - type: textarea
+    id: pr-urls
     attributes:
-      id: pr-urls
       label: "What PRs need to be cherry-picked into the release branch?"
       description: "Pull request URLs, one per line"
       placeholder: |
@@ -22,8 +22,8 @@ body:
     validations:
       required: true
   - type: textarea
+    id: why-needed
     attributes:
-      id: why-needed
       label: "Why do these PRs need to break the code freeze?"
       placeholder: "This is a revert of ... which introcuded a bug that causes ..."
     validations:
@@ -36,22 +36,24 @@ body:
     validations:
       required: true
   - type: textarea
+    id: plan-if-defects-discovered
     attributes:
-      id: plan-if-defects-discovered
       label: "What is the plan should defects to be discovered in these PRs ahead of final release?"
       placeholder: "Reverting this PR and ... would be enough"
     validations:
       required: true
   - type: textarea
+    id: how-to-communicate
     attributes:
       label: "How should this change be communicated in the release post on the [public developer blog](https://href.li/?https://developer.woo.com/blog/)?"
       placeholder: "There is no need to add new communication to the already planned one."
     validations:
       required: true
   - type: textarea
+    id: who-to-ask
     attributes:
       label: "If you’re not available and we have questions about this request, is there another person(s) and/or a team that we can ping?"
-      plaheholder: "@person or anyone from the ... team"
+      placeholder: "@person or anyone from the ... team"
     validations:
       required: true
   - type: markdown
