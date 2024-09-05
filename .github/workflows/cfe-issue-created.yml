@@ -15,7 +15,7 @@ jobs:
         with:
           script: |
             const http = new HttpClient();
-            const body = "CFE received: \n${{ toJson(github) }}";
+            const body = `CFE received: \n${{ toJson(github) }}`;
             const headers = { 'authorization': 'Bearer ${{ secrets.SLACK_TOKEN }}' };
             const response = await http.request('POST', 'https://slack.com/api/chat.postMessage', body, headers);
 
