@@ -11,15 +11,14 @@ jobs:
       issues: write
     steps:
       - name: Send Slack message
-        uses: actions/github-script@v6
+        uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
+        id: notify-slack
         with:
-          script: |
-            const http = new HttpClient();
-            const body = `CFE received: \n${{ toJson(github) }}`;
-            const headers = { 'authorization': 'Bearer ${{ secrets.SLACK_TOKEN }}' };
-            const response = await http.request('POST', 'https://slack.com/api/chat.postMessage', body, headers);
-
-            const success = response.message.statusCode && response.message.statusCode < 400;
-            if(!success) {
-              core.setFailed(`Request failed with status code ${response.message.statusCode}.`);
-            }
+            slack-bot-user-oauth-access-token: ${{ secrets.SLACK_TOKEN }}
+            slack-channel: general
+            slack-text: |
+                CFE created!
+                ${{ toJson(github) }}
+            slack-optional-unfurl_links: false
+            slack-optional-unfurl_media: false
+  
