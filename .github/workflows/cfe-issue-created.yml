@@ -10,11 +10,16 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-    
-      - name: Setup WooCommerce Monorepo
-        uses: ./.github/actions/setup-woocommerce-monorepo
+      - name: Send Slack message
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const http = new HttpClient();
+            const body = "CFE received: " + toJson(github);
+            const headers = { 'authorization': 'Bearer ' + ${{ secrets.SLACK_TOKEN }} }
+            const response = await http.request('POST', 'https://slack.com/api/chat.postMessage', body, headers);
 
-      - name: Add comment
-        run: 'pnpm utils slack message ${{ secrets.SLACK_TOKEN }} "CFE issue created! The thing: ${{ toJson(github) }}" general'
+            const success = response.message.statusCode && response.message.statusCode < 400;
+            if(!success) {
+              core.setFailed(`Request failed with status code ${response.message.statusCode}.`);
+            }
