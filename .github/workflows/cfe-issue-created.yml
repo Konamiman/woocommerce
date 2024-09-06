@@ -15,10 +15,10 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            import * as fs from 'fs'
             const key = 'valid_user';
             const value = false;
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`)
+            core.setOutput(key, value);
+            //fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`)
       - name: Send Slack message
         if: ${{ steps.verify_user.outputs.valid_user == 'true' }}
         uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
