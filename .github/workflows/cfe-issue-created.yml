@@ -16,7 +16,7 @@ jobs:
         with:
           username: ${{ github.event.issue.user.login }}
           organization: $ {{ github.repository_owner }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_USERS_TOKEN }}
       - name: Send Slack message
         if: ${{ steps.user_org_verify.outputs.result == 'true' }}
         uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
