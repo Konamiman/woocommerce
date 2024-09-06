@@ -16,7 +16,7 @@ jobs:
         with:
           script: |
             const key = 'valid_user';
-            const value = false;
+            const value = true;
             core.setOutput(key, value);
             //fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`)
       - name: Send Slack message
