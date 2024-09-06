@@ -10,17 +10,15 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Verify if user is authorized
+      - name: Verify if user is in the relevant organization
         id: verify_user
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const key = 'valid_user';
-            const value = true;
-            core.setOutput(key, value);
-            //fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`)
+      -  uses: tspascoal/get-user-teams-membership@v3
+         id: user_org_verify
+         with:
+           username: ${{ github.actor }}
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Send Slack message
-        if: ${{ steps.verify_user.outputs.valid_user == 'true' }}
+        if: ${{ steps.user_org_verify.outputs.isTeamMember == 'true' }}
         uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
         id: notify-slack
         with:
@@ -32,8 +30,7 @@ jobs:
             slack-optional-unfurl_links: false
             slack-optional-unfurl_media: false
       - name: Close the issue
-        if: ${{ steps.verify_user.outputs.valid_user != 'true' }}
-        run: gh issue close --comment "Closing issue. **Only WooCommerce employees can open CFEs.**" "https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}"
+        if: ${{ steps.user_org_verify.outputs.isTeamMember != 'true' }}
+        run: gh issue close --comment "Closing issue. **Only WooCommerce employees can open CFEs.** _We probably need a more polite message here._" "https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
