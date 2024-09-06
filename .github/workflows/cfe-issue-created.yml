@@ -33,7 +33,7 @@ jobs:
             slack-optional-unfurl_media: false
       - name: Close the issue
         if: ${{ steps.verify_user.outputs.valid_user != 'true' }}
-        run: gh issue close --comment "Closing issue. **Only WooCommerce employees can open CFEs.**" "https://github.com/${{ github.repository }}/${{ github.event.issue.number }}"
+        run: gh issue close --comment "Closing issue. **Only WooCommerce employees can open CFEs.**" "https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
