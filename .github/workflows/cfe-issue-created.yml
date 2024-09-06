@@ -17,7 +17,7 @@ jobs:
           username: ${{ github.actor }}
           organization: 'woocommerce'
           team: 'Automatticians'
-          token: ${{ secrets.GH_ORG_READ_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_ORG_READ_TOKEN }}
       - name: Send Slack message
         if: ${{ steps.user_org_verify.outputs.isTeamMember  == 'true' }}
         uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
