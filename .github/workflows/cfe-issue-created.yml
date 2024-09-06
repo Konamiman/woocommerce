@@ -19,7 +19,7 @@ jobs:
             const value = false;
             fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`)
       - name: Send Slack message
-        if: steps.verify_user.outputs.valid_user == 'true';
+        if: steps.verify_user.outputs.valid_user == 'true'
         uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
         id: notify-slack
         with:
@@ -31,7 +31,7 @@ jobs:
             slack-optional-unfurl_links: false
             slack-optional-unfurl_media: false
       - name: Close the issue
-        if: steps.verify_user.outputs.valid_user != 'true';
+        if: steps.verify_user.outputs.valid_user != 'true'
         run: gh issue close --comment "Closing issue. **Only WooCommerce employees can open CFEs.**" "${{ github.event.issue.number }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
