@@ -15,6 +15,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            import * as fs from 'fs'
             const key = 'valid_user';
             const value = false;
             fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`)
