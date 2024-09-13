@@ -1,5 +1,5 @@
 name: 🚧 Code freeze exception request
-description: Request a the creation of pull request that will be handled as a code freeze exception.
+description: Request handling one or more pull requests(s) as code freeze exception(s).
 title: "[CFE]: "
 labels: ["code freeze exception"]
 body:
@@ -21,17 +21,10 @@ body:
       placeholder: "9.7.0"
     validations:
       required: true
-  - type: input
-    id: branch-name
-    attributes:
-      label: "What's the name of the code branch with the changes?"
-      placeholder: fix/foobars-not-fizzbuzzing
-    validations:
-      required: true
   - type: textarea
     id: pr-urls
     attributes:
-      label: "What PRs need to be cherry-picked into the release branch?"
+      label: "What PRs implement the changes for which the exception is requested?"
       description: "Pull request URLs, one per line"
       placeholder: |
         https://github.com/woocommerce/woocommerce/pull/1234
