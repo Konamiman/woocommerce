@@ -1,5 +1,6 @@
 ### Submission Review Guidelines:
 
+- If you are submitting a CFE, [click here instead!](?expand=1&labels=code+freeze+exception&template=cfe.md)
 -   I have followed the [WooCommerce Contributing Guidelines](https://github.com/woocommerce/woocommerce/blob/trunk/.github/CONTRIBUTING.md) and the [WordPress Coding Standards](https://make.wordpress.org/core/handbook/best-practices/coding-standards/).
 -   I have checked to ensure there aren't other open [Pull Requests](https://github.com/woocommerce/woocommerce/pulls) for the same update/change.
 -   I have reviewed my code for [security best practices](https://developer.wordpress.org/apis/security/).
