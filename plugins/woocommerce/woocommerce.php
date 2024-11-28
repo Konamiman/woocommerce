@@ -68,3 +68,4 @@ if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) )
 
 
 // Fix one for CFE of 9.5.0
+// Fix one for PRR 9.4.1
