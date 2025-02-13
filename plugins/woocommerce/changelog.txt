@@ -1,0 +1,4 @@
+*** WooCommerce ***
+
+2025-02-18 - Version 9.9.0.10
+* Update - Deploy of WooCommerce 9.9.0.10
