@@ -50,5 +50,3 @@ switch ( $template ) {
 		echo '</main></div>';
 		break;
 }
-
-echo '</div>'; // Closes .woocommerce-content
