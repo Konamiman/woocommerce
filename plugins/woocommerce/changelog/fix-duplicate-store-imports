@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Prevent data stores being imported twice when there are circular dependencies

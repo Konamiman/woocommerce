@@ -1,0 +1,4 @@
+Significance: minor
+Type: add
+
+Add is_always_accessible method to Task class, to allow tasks to still be accessible when list is hidden.

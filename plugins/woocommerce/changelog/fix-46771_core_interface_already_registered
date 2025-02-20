@@ -1,0 +1,4 @@
+Significance: minor
+Type: add
+
+Bundle in the @wordpress/interface/build-module dependencies.

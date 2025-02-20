@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+API tests: adapt some tests to work with external and multisite environments

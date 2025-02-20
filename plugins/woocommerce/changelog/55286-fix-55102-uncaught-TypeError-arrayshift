@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Check if $terms is an array before calling array_shift to prevent fatal errors.

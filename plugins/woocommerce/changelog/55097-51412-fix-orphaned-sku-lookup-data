@@ -1,0 +1,4 @@
+Significance: minor
+Type: fix
+
+Delete all post-associated data when a post is deleted.

@@ -1,0 +1,4 @@
+Significance: minor
+Type: performance
+
+Refactor task list state management and visibility checks to improve performance

@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Fixes exclusion of 'View' action by key instead of translated name in the `order-details.php` template.

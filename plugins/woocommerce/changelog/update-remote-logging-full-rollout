@@ -1,0 +1,4 @@
+Significance: patch
+Type: update
+
+Remove variant assignment check from remote logging

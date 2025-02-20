@@ -1,0 +1,4 @@
+Significance: minor
+Type: fix
+
+Add check to ensure the product variable is a WC_Product before using it.

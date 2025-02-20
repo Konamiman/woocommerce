@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+E2E tests: remove support for DEFAULT_TIMEOUT_OVERRIDE environment variable

@@ -1,0 +1,4 @@
+Significance: minor
+Type: update
+
+When no products are created yet, redirect "All Products" page to "Add Product" task.

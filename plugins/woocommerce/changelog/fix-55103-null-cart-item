@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Add defensive check to ensure the product object exists in items in the cart session
