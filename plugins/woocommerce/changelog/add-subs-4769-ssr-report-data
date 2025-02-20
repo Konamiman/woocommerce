@@ -1,0 +1,4 @@
+Significance: minor
+Type: add
+
+Makes SSR report data available to consumers of the `woocommerce_system_status_report` action hook.

@@ -1,0 +1,4 @@
+Significance: minor
+Type: performance
+
+Remove the unneeded wp-editor script dependency when the product editor feature is not enabled.

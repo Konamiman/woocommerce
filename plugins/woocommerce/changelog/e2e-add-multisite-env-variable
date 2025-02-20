@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+E2E tests: skip the tests not supporting multisite flows

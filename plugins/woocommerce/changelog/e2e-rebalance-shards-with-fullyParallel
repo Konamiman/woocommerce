@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+E2E tests: enable fullyParallel mode for a more balanced shard execution

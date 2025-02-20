@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Prevent fatal error when outputting WC notices in an invalid context.

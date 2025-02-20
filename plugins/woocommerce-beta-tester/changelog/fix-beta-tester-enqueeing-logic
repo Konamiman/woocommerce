@@ -1,0 +1,4 @@
+Significance: minor
+Type: performance
+
+Split JS into multiple chunks to avoid loading on every admin page.

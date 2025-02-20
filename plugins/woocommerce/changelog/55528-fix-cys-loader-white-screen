@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Fix white screen flash during Customize Your Store task loading transition.

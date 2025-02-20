@@ -1,0 +1,4 @@
+Significance: patch
+Type: fix
+
+Prevent fatal error in cross sell display code.

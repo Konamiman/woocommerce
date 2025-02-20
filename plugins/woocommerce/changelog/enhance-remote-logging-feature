@@ -1,0 +1,4 @@
+Significance: patch
+Type: enhancement
+
+Update remote logging feature UI to depend on usage tracking status

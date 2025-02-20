@@ -1,0 +1,4 @@
+Significance: patch
+Type: update
+
+Refactored ExportWCSettings by splitting it into multiple exporters, each handling a specific section.

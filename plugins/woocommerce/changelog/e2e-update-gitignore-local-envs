@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+E2E tests: updated gitignore to exclude paths containing _local

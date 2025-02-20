@@ -1,0 +1,5 @@
+Significance: patch
+Type: fix
+Comment: Move FilterableControl on top of order by controls in the Product Collection block
+
+

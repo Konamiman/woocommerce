@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+E2E tests: fixed IS_MULTISITE always resolved to true

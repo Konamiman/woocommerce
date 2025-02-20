@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+Reenable TS checking for plugins/woocommerce/client/admin/

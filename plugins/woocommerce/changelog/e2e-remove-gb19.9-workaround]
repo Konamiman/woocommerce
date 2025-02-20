@@ -1,0 +1,4 @@
+Significance: patch
+Type: dev
+
+E2E tests: remove to do comments on editor actions with Gutenberg
