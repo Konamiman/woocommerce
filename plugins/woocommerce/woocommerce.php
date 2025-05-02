@@ -65,3 +65,8 @@ $GLOBALS['woocommerce'] = WC();
 if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) ) {
 	\Automattic\Jetpack\Connection\Rest_Authentication::init();
 }
+
+
+// Fix one for CFE of 9.5.0
+// Fix in trunk from regular PR
+// Fix one for PRR 9.4.1
