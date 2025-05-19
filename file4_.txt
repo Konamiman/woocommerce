@@ -88,4 +88,3 @@ This is also why the same operation might be represented differently in differen
 
 This behavior is part of Git's design philosophy where renames are not tracked explicitly but are instead detected after the fact based on content similarity. This is why you sometimes see different representations of the same operation in different contexts.
 
-...hi.
