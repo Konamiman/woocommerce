@@ -1,0 +1,89 @@
+Ah, this is a great question that gets to the heart of how Git and GitHub handle file renames!
+
+The key difference lies in how Git detects renames. Git doesn't actually track renames explicitly - instead, it uses a similarity detection algorithm to determine if a file was renamed. Here's how it works:
+
+1. When you rename and modify a file locally and commit it, Git sees this as two separate operations:
+   - Deletion of the old file
+   - Addition of the new file
+
+2. However, when GitHub's API returns the data, it runs a similarity detection algorithm that looks at:
+   - The content similarity between the old and new file
+   - The timing of the changes (if they happened in the same commit)
+   - The file size and other metadata
+
+The API will combine the deletion and addition into a single rename operation when:
+- The content similarity between the old and new file is above a certain threshold (typically around 50%)
+- The changes happened in the same commit
+- The file size difference isn't too large
+
+This is why you might see different behaviors:
+- If you rename a file and make minimal changes, it will likely be detected as a rename with some changes
+- If you rename a file and completely rewrite its contents, it will likely be shown as separate delete and add operations
+- If you rename a file and make moderate changes, it might be detected as a rename with changes, depending on how similar the content remains
+
+This is also why the same operation might be represented differently in different contexts:
+- In your local Git history, it's always separate delete and add operations
+- In GitHub's API, it might be combined into a rename if the similarity detection algorithm determines it was likely a rename
+- In GitHub's web interface, it might be shown differently than in the API, as the web interface uses its own algorithms for detecting renames
+
+This behavior is part of Git's design philosophy where renames are not tracked explicitly but are instead detected after the fact based on content similarity. This is why you sometimes see different representations of the same operation in different contexts.
+
+Ah, this is a great question that gets to the heart of how Git and GitHub handle file renames!
+
+The key difference lies in how Git detects renames. Git doesn't actually track renames explicitly - instead, it uses a similarity detection algorithm to determine if a file was renamed. Here's how it works:
+
+1. When you rename and modify a file locally and commit it, Git sees this as two separate operations:
+   - Deletion of the old file
+   - Addition of the new file
+
+2. However, when GitHub's API returns the data, it runs a similarity detection algorithm that looks at:
+   - The content similarity between the old and new file
+   - The timing of the changes (if they happened in the same commit)
+   - The file size and other metadata
+
+The API will combine the deletion and addition into a single rename operation when:
+- The content similarity between the old and new file is above a certain threshold (typically around 50%)
+- The changes happened in the same commit
+- The file size difference isn't too large
+
+This is why you might see different behaviors:
+- If you rename a file and make minimal changes, it will likely be detected as a rename with some changes
+- If you rename a file and completely rewrite its contents, it will likely be shown as separate delete and add operations
+- If you rename a file and make moderate changes, it might be detected as a rename with changes, depending on how similar the content remains
+
+This is also why the same operation might be represented differently in different contexts:
+- In your local Git history, it's always separate delete and add operations
+- In GitHub's API, it might be combined into a rename if the similarity detection algorithm determines it was likely a rename
+- In GitHub's web interface, it might be shown differently than in the API, as the web interface uses its own algorithms for detecting renames
+
+This behavior is part of Git's design philosophy where renames are not tracked explicitly but are instead detected after the fact based on content similarity. This is why you sometimes see different representations of the same operation in different contexts.
+
+Ah, this is a great question that gets to the heart of how Git and GitHub handle file renames!
+
+The key difference lies in how Git detects renames. Git doesn't actually track renames explicitly - instead, it uses a similarity detection algorithm to determine if a file was renamed. Here's how it works:
+
+1. When you rename and modify a file locally and commit it, Git sees this as two separate operations:
+   - Deletion of the old file
+   - Addition of the new file
+
+2. However, when GitHub's API returns the data, it runs a similarity detection algorithm that looks at:
+   - The content similarity between the old and new file
+   - The timing of the changes (if they happened in the same commit)
+   - The file size and other metadata
+
+The API will combine the deletion and addition into a single rename operation when:
+- The content similarity between the old and new file is above a certain threshold (typically around 50%)
+- The changes happened in the same commit
+- The file size difference isn't too large
+
+This is why you might see different behaviors:
+- If you rename a file and make minimal changes, it will likely be detected as a rename with some changes
+- If you rename a file and completely rewrite its contents, it will likely be shown as separate delete and add operations
+- If you rename a file and make moderate changes, it might be detected as a rename with changes, depending on how similar the content remains
+
+This is also why the same operation might be represented differently in different contexts:
+- In your local Git history, it's always separate delete and add operations
+- In GitHub's API, it might be combined into a rename if the similarity detection algorithm determines it was likely a rename
+- In GitHub's web interface, it might be shown differently than in the API, as the web interface uses its own algorithms for detecting renames
+
+This behavior is part of Git's design philosophy where renames are not tracked explicitly but are instead detected after the fact based on content similarity. This is why you sometimes see different representations of the same operation in different contexts.
