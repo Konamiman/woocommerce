@@ -1,4 +1,0 @@
-Significance: minor
-Type: dev
-
-Add isWpVersion mock function to the @woocommerce/settings mock.

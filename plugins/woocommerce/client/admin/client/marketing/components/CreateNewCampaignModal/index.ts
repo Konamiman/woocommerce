@@ -1,1 +1,0 @@
-export { CreateNewCampaignModal } from './CreateNewCampaignModal';

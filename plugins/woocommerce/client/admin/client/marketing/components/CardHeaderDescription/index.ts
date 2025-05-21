@@ -1,1 +1,0 @@
-export { CardHeaderDescription } from './CardHeaderDescription';
