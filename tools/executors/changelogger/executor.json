@@ -1,9 +1,0 @@
-{
-	"executors": {
-		"changelog": {
-			"implementation": "./impl",
-			"schema": "./schema.json",
-			"description": "Executes Jetpack Changelogger scripts."
-		}
-	}
-}

@@ -1,118 +1,78 @@
-# Operating System files
-.DS_Store
-Thumbs.db
-
-# IDE files
-.idea
-.vscode/*
+# Editors
 project.xml
 project.properties
+/nbproject/private/
+.buildpath
 .project
 .settings*
+.idea
+.vscode
 *.sublime-project
 *.sublime-workspace
 .sublimelinterrc
+*.swp
 
 # Grunt
+node_modules/
 none
 
 # Sass
 .sass-cache/
 
-# Logs
-logs/
+# Compiled CSS
+/assets/css/*.css
+/assets/css/photoswipe/**/*.min.css
 
-# Eslint
-.eslintcache
-eslint_report.json
+# Minified JS
+/assets/js/**/*.min.js
 
-# Environment files
-wp-cli.local.yml
-yarn-error.log
-npm-debug.log
-.pnpm-debug.log
+# OS X metadata
+.DS_Store
 
-# Build files
-*.sql
-*.swp
-*.zip
+# Windows junk
+Thumbs.db
 
-# Built packages
-build/
-build-module/
-build-style/
-build-style.js
-build-types/
-dist/
-oclif.manifest.json
-
-# Project files
-node_modules/
-vendor/
-
-# TypeScript files
-tsconfig.tsbuildinfo
-
-# Node Package Dependencies
-package-lock.json
-
-# wp-env config
-.wp-env.override.json
+# Behat/CLI Tests
+tests/cli/installer
+tests/cli/composer.phar
+tests/cli/composer.lock
+tests/cli/composer.json
+tests/cli/vendor
 
 # Unit tests
-tmp/
+/tmp
+/tests/bin/tmp
+/tests/e2e/config/local-*.json
+/tests/e2e/config/local.json
+/tests/e2e/config/default.json
+/tests/e2e/env/config/default.json
+/tests/e2e/docker
+/tests/e2e/env/docker/wp-cli/initialize.sh
+/tests/e2e/env/build/
+/tests/e2e/env/build-module/
+/tests/e2e/utils/build/
+/tests/e2e/utils/build-module/
+
+# Logs
+/logs
 
 # Composer
-vendor/
-bin/composer/**/vendor/
-lib/vendor/
+/vendor/
+/bin/composer/**/vendor/
+/lib/vendor/
 contributors.md
 contributors.html
 
-# Yarn
-yarn.lock
+# Packages
+/packages/*
+!/packages/README.md
 
-# Editors
-nbproject/private/
+# Screenshots for e2e tests failures
+/screenshots/
 
-# E2E and API Test Results
-test-results
-.auth/
+# Language files
+i18n/languages/woocommerce.pot
 
-# Admin Feature config
-plugins/woocommerce/includes/react-admin/feature-config.php
-
-# PHP lint
-phpcs-report.xml
-
-#PHP Unit
-.phpunit.result.cache
-
-# Allure directories
-allure-report
-allure-results
-
-# Code analyzer output and env
-changes.json
-.env
-
-# Build Cache
-.turbo
-.wireit
-
-# Support .gitkeep Files
-!.gitkeep
-
-# default docs manifest
-/manifest.json
-
-# Metrics tests
-/artifacts
-/plugins/*/artifacts
-/tools/*/artifacts
-
-# Cursor related files
-.cursorignore
-.cursorindexingignore
-.cursor/rules/custom-*
-.cursor/rules/local-*
+# Build
+build/
+woocommerce.zip
