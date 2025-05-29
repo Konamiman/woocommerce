@@ -8,8 +8,6 @@
  * Author URI: https://woocommerce.com
  * Text Domain: woocommerce
  * Domain Path: /i18n/languages/
- * Requires at least: 6.6
- * Requires PHP: 7.4
  *
  * @package WooCommerce
  */
@@ -29,6 +27,8 @@ if ( ! \Automattic\WooCommerce\Autoloader::init() ) {
 }
 \Automattic\WooCommerce\Packages::init();
 
+// A new line because yes.
+
 // Include the main WooCommerce class.
 if ( ! class_exists( 'WooCommerce', false ) ) {
 	include_once dirname( WC_PLUGIN_FILE ) . '/includes/class-woocommerce.php';
@@ -38,7 +38,7 @@ if ( ! class_exists( 'WooCommerce', false ) ) {
 $GLOBALS['wc_container'] = new Automattic\WooCommerce\Container();
 
 /**
- * Returns the main instance of WC.
+ * Returns the main instance of WC. Modified!!
  *
  * @since  2.1
  * @return WooCommerce
@@ -67,3 +67,4 @@ if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) )
 }
 
 // Foobar!
+// ...and fizzbuzz.
