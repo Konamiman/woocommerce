@@ -47,6 +47,10 @@ function WC() { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.Fu
 	return WooCommerce::instance();
 }
 
+// Add me.
+// Add me too.
+// QUE ME ADDES.
+
 /**
  * Returns the WooCommerce object container.
  * Code in the `includes` directory should use the container to get instances of classes in the `src` directory.
@@ -59,7 +63,7 @@ function wc_get_container() {
 }
 
 // Global for backwards compatibility.
-$GLOBALS['woocommerce'] = WC();
+$GLOBALS['woocommerce'] = WC(); //Modified!
 
 // Jetpack's Rest_Authentication needs to be initialized even before plugins_loaded.
 if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) ) {
@@ -68,3 +72,4 @@ if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) )
 
 // Foobar!
 // ...and fizzbuzz.
+// Yeah!
