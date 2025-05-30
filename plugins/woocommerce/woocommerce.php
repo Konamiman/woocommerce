@@ -4,7 +4,7 @@
  * Plugin URI: https://woocommerce.com/
  * Description: An ecommerce toolkit that helps you sell anything. Beautifully.
  * Version: 10.34.0-some-release
- * Author: Automattic
+ * Author: Automattic!
  * Author URI: https://woocommerce.com
  * Text Domain: woocommerce
  * Domain Path: /i18n/languages/
@@ -65,3 +65,8 @@ $GLOBALS['woocommerce'] = WC();
 if ( class_exists( \Automattic\Jetpack\Connection\Rest_Authentication::class ) ) {
 	\Automattic\Jetpack\Connection\Rest_Authentication::init();
 }
+
+// Changing woocommerce.php just for fun!
+// More! He he
+
+
