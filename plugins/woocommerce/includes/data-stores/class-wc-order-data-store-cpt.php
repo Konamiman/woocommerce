@@ -271,6 +271,7 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 			'_recorded_coupon_usage_counts' => 'recorded_coupon_usage_counts',
 			'_new_order_email_sent'         => 'new_order_email_sent',
 			'_order_stock_reduced'          => 'order_stock_reduced',
+			'_cogs_total_value'             => 'cogs_total_value',
 		);
 
 		$props_to_update = $this->get_props_to_update( $order, $meta_key_to_props );
@@ -298,6 +299,23 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 					}
 					$value = is_bool( $value ) ? wc_bool_to_string( $value ) : $value;
 					$value = 'yes' === $value ? 'true' : 'false'; // For backward compatibility, we store as true/false in DB.
+					break;
+				case 'cogs_total_value':
+					// Skip COGS if feature is disabled or order doesn't manage COGS.
+					if ( ! $order->has_cogs() || ! $this->cogs_is_enabled() ) {
+						continue 2; // Skip to next iteration of foreach.
+					}
+					// Apply the save filter.
+					$value = apply_filters( 'woocommerce_save_order_cogs_value', $value, $order );
+					if ( is_null( $value ) ) {
+						continue 2; // Filter returned null, skip saving.
+					}
+					// Delete meta if value is zero (optimization).
+					if ( 0.0 === (float) $value ) {
+						delete_post_meta( $id, $meta_key );
+						$updated_props[] = $prop;
+						continue 2;
+					}
 					break;
 			}
 
@@ -356,11 +374,6 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 		}
 
 		parent::update_post_meta( $order );
-
-		// Save Cost of Goods Sold data if the feature is enabled and the order manages COGS.
-		if ( $order->has_cogs() && $this->cogs_is_enabled() ) {
-			$this->save_cogs_data( $order );
-		}
 
 		// If address changed, store concatenated version to make searches faster.
 		if ( in_array( 'billing', $updated_props, true ) || ! metadata_exists( 'post', $id, '_billing_address_index' ) ) {
@@ -1422,37 +1435,5 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 
 		$order->set_cogs_total_value( (float) $cogs_value );
 		$order->apply_changes();
-	}
-
-	/**
-	 * Save the Cost of Goods Sold value of a given order to the database.
-	 *
-	 * @param WC_Order $order The order to save the COGS value for.
-	 */
-	private function save_cogs_data( $order ) {
-		$cogs_value = $order->get_cogs_total_value();
-
-		/**
-		 * Filter to customize the Cost of Goods Sold value that gets saved for a given order,
-		 * or to suppress the saving of the value (so that custom storage can be used).
-		 *
-		 * @since 9.5.0
-		 *
-		 * @param float|null         $cogs_value The value to be written to the database. If returned as null, nothing will be written.
-		 * @param WC_Abstract_Order $order      The order for which the value is being saved.
-		 */
-		$cogs_value = apply_filters( 'woocommerce_save_order_cogs_value', $cogs_value, $order );
-		if ( is_null( $cogs_value ) ) {
-			return;
-		}
-
-		$order_id = $order->get_id();
-
-		// Delete the meta if the value is zero, otherwise update it.
-		if ( 0.0 === $cogs_value ) {
-			delete_post_meta( $order_id, '_cogs_total_value' );
-		} else {
-			update_post_meta( $order_id, '_cogs_total_value', $cogs_value );
-		}
 	}
 }
