@@ -1058,12 +1058,15 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	 * @testDox _cogs_total_value is included in internal meta keys to prevent it from showing as custom field.
 	 */
 	public function test_cogs_total_value_is_internal_meta() {
-		$data_store       = new WC_Order_Data_Store_CPT();
-		$internal_meta    = new \ReflectionProperty( $data_store, 'internal_meta_keys' );
-		$internal_meta->setAccessible( true );
-		$internal_keys = $internal_meta->getValue( $data_store );
+		// phpcs:disable Squiz.Commenting
+		$data_store = new class() extends WC_Order_Data_Store_CPT {
+			public function get_internal_meta_keys() {
+				return $this->internal_meta_keys;
+			}
+		};
+		// phpcs:enable Squiz.Commenting
 
-		$this->assertContains( '_cogs_total_value', $internal_keys, 'COGS total value should be in internal meta keys' );
+		$this->assertContains( '_cogs_total_value', $data_store->get_internal_meta_keys(), 'COGS total value should be in internal meta keys' );
 	}
 
 	/**
@@ -1094,12 +1097,16 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$this->assertFalse( metadata_exists( 'post', $order->get_id(), '_cogs_total_value' ) );
 
 		// Simulate what happens during compatibility mode backfill.
-		$data_store = new WC_Order_Data_Store_CPT();
-		$update_method = new \ReflectionMethod( $data_store, 'update_order_meta_from_object' );
-		$update_method->setAccessible( true );
+		// phpcs:disable Squiz.Commenting
+		$data_store = new class() extends WC_Order_Data_Store_CPT {
+			public function update_order_meta_from_object( $order ) {
+				parent::update_order_meta_from_object( $order );
+			}
+		};
+		// phpcs:enable Squiz.Commenting
 
 		// Call update_order_meta_from_object which should sync COGS.
-		$update_method->invoke( $data_store, $modified_order );
+		$data_store->update_order_meta_from_object( $modified_order );
 
 		// Verify the COGS value was synced to the database.
 		$this->assertEquals( $modified_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
@@ -1140,13 +1147,17 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		// Set it to the expected value to simulate an HPOS order with COGS that needs to be synced.
 		$fresh_order->set_cogs_total_value( $expected_cogs );
 
-		// Now simulate backfill by calling update_order_meta_from_object.
-		$data_store = new WC_Order_Data_Store_CPT();
-		$update_method = new \ReflectionMethod( $data_store, 'update_order_meta_from_object' );
-		$update_method->setAccessible( true );
+		// Create an anonymous class to access the protected method.
+		// phpcs:disable Squiz.Commenting
+		$data_store = new class() extends WC_Order_Data_Store_CPT {
+			public function update_order_meta_from_object( $order ) {
+				parent::update_order_meta_from_object( $order );
+			}
+		};
+		// phpcs:enable Squiz.Commenting
 
 		// Call update_order_meta_from_object which should sync COGS.
-		$update_method->invoke( $data_store, $fresh_order );
+		$data_store->update_order_meta_from_object( $fresh_order );
 
 		// Verify COGS was synced.
 		$this->assertEquals( $expected_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
