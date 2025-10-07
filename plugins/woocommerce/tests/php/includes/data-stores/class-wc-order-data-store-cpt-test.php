@@ -1015,20 +1015,25 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	public function test_cogs_total_value_calculated_and_persisted_with_cpt() {
 		$this->enable_cogs_feature();
 
+		$product1_cost = 12.34;
+		$product1_qty  = 2;
+		$product2_cost = 5.50;
+		$product2_qty  = 3;
+		$expected_total = ( $product1_cost * $product1_qty ) + ( $product2_cost * $product2_qty );
+
 		$order = new WC_Order();
-		$this->add_product_with_cogs_to_order( $order, 12.34, 2 ); // 2 items at 12.34 each = 24.68
-		$this->add_product_with_cogs_to_order( $order, 5.50, 3 );  // 3 items at 5.50 each = 16.50
-		// Total COGS should be 24.68 + 16.50 = 41.18
+		$this->add_product_with_cogs_to_order( $order, $product1_cost, $product1_qty );
+		$this->add_product_with_cogs_to_order( $order, $product2_cost, $product2_qty );
 
 		$order->calculate_cogs_total_value();
 		$order->save();
 
 		// Verify COGS is saved to database.
-		$this->assertEquals( 41.18, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+		$this->assertEquals( $expected_total, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
 
 		// Verify COGS is loaded correctly when order is retrieved.
 		$loaded_order = wc_get_order( $order->get_id() );
-		$this->assertEquals( 41.18, $loaded_order->get_cogs_total_value() );
+		$this->assertEquals( $expected_total, $loaded_order->get_cogs_total_value() );
 	}
 
 	/**
@@ -1067,17 +1072,22 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	public function test_cogs_in_meta_key_to_props_for_sync() {
 		$this->enable_cogs_feature();
 
+		$product_cost      = 10.50;
+		$product_qty       = 2;
+		$initial_cogs      = $product_cost * $product_qty;
+		$modified_cogs     = $initial_cogs * 2;
+
 		$order = new WC_Order();
-		$this->add_product_with_cogs_to_order( $order, 10.50, 2 ); // 2 items at 10.50 each = 21.00
+		$this->add_product_with_cogs_to_order( $order, $product_cost, $product_qty );
 		$order->calculate_cogs_total_value();
 		$order->save();
 
-		$this->assertEquals( 21.00, $order->get_cogs_total_value() );
-		$this->assertEquals( 21.00, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+		$this->assertEquals( $initial_cogs, $order->get_cogs_total_value() );
+		$this->assertEquals( $initial_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
 
 		// Reload the order and modify COGS value to simulate HPOS order with different value.
 		$modified_order = wc_get_order( $order->get_id() );
-		$modified_order->set_cogs_total_value( 42.00 );
+		$modified_order->set_cogs_total_value( $modified_cogs );
 
 		// Delete the post meta to simulate it not being synced yet.
 		delete_post_meta( $order->get_id(), '_cogs_total_value' );
@@ -1092,11 +1102,11 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$update_method->invoke( $data_store, $modified_order );
 
 		// Verify the COGS value was synced to the database.
-		$this->assertEquals( 42.00, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+		$this->assertEquals( $modified_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
 
 		// Reload and verify.
 		$reloaded_order = wc_get_order( $order->get_id() );
-		$this->assertEquals( 42.00, $reloaded_order->get_cogs_total_value() );
+		$this->assertEquals( $modified_cogs, $reloaded_order->get_cogs_total_value() );
 	}
 
 	/**
@@ -1105,15 +1115,19 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	public function test_cogs_synced_via_update_order_meta_from_object() {
 		$this->enable_cogs_feature();
 
+		$product_cost = 15.75;
+		$product_qty  = 3;
+		$expected_cogs = $product_cost * $product_qty;
+
 		$order = new WC_Order();
-		$this->add_product_with_cogs_to_order( $order, 15.75, 3 ); // 3 items at 15.75 each = 47.25
+		$this->add_product_with_cogs_to_order( $order, $product_cost, $product_qty );
 		$order->calculate_cogs_total_value();
 		$order->save();
 
-		$this->assertEquals( 47.25, $order->get_cogs_total_value() );
+		$this->assertEquals( $expected_cogs, $order->get_cogs_total_value() );
 
 		// Verify it's in the database.
-		$this->assertEquals( 47.25, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+		$this->assertEquals( $expected_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
 
 		// Delete the COGS meta to simulate it not being synced yet.
 		delete_post_meta( $order->get_id(), '_cogs_total_value' );
@@ -1124,7 +1138,7 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 
 		// The fresh order will have 0 COGS since we deleted the meta.
 		// Set it to the expected value to simulate an HPOS order with COGS that needs to be synced.
-		$fresh_order->set_cogs_total_value( 47.25 );
+		$fresh_order->set_cogs_total_value( $expected_cogs );
 
 		// Now simulate backfill by calling update_order_meta_from_object.
 		$data_store = new WC_Order_Data_Store_CPT();
@@ -1135,6 +1149,6 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$update_method->invoke( $data_store, $fresh_order );
 
 		// Verify COGS was synced.
-		$this->assertEquals( 47.25, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+		$this->assertEquals( $expected_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
 	}
 }
