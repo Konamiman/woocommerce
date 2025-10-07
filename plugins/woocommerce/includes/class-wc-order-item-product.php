@@ -562,14 +562,15 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	 * @return float|null The calculated value, null if the product associated to the line item no longer exists.
 	 */
 	public function calculate_cogs_value_core(): ?float {
-		// If this item already has a saved COGS value, return it.
-		// COGS should be "snapshotted" at order creation time, not recalculated from current product values.
-		$existing_value = $this->get_cogs_value( 'edit' );
-		if ( $existing_value > 0 ) {
-			return $existing_value;
+		// If this item has been loaded from the database and has a saved COGS value, preserve it.
+		// COGS values should be "snapshotted" at order creation time, not recalculated later.
+		// This prevents historical orders from having their costs changed when product prices are updated.
+		// Note: cogs_value will be null if the item was loaded but had no _cogs_value metadata.
+		if ( $this->get_id() > 0 && $this->get_object_read() && isset( $this->data['cogs_value'] ) && ! is_null( $this->data['cogs_value'] ) ) {
+			return $this->get_cogs_value( 'edit' );
 		}
 
-		// Otherwise, calculate from the product.
+		// For new items or items without saved COGS, calculate from the product.
 		$product = $this->get_product();
 		if ( ! $product ) {
 			return null;
