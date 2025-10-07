@@ -1296,9 +1296,15 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$expected_order_cogs = $product_cost * $product_qty;
 		$expected_refund_cogs = -( $product_cost * $refund_qty );
 
+		// Create a product with COGS and price.
+		$product = WC_Helper_Product::create_simple_product();
+		$product->set_regular_price( $product_cost );
+		$product->set_cogs_value( $product_cost );
+		$product->save();
+
 		// Create an order with COGS.
 		$order = new WC_Order();
-		$this->add_product_with_cogs_to_order( $order, $product_cost, $product_qty );
+		$order->add_product( $product, $product_qty );
 		$order->calculate_totals();
 		$order->save();
 
@@ -1312,7 +1318,7 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$refund = wc_create_refund(
 			array(
 				'order_id'   => $order->get_id(),
-				'amount'     => $product_cost * $refund_qty * $product_qty / $product_qty,
+				'amount'     => $product_cost * $refund_qty,
 				'reason'     => 'testing',
 				'line_items' => array(
 					$order_item->get_id() => array(
@@ -1322,6 +1328,8 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 				),
 			)
 		);
+
+		$this->assertNotInstanceOf( 'WP_Error', $refund, 'Refund creation should not return an error' );
 		$refund->save();
 
 		// Verify the refund has the correct COGS (negative value).
