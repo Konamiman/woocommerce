@@ -279,6 +279,8 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 		foreach ( $props_to_update as $meta_key => $prop ) {
 			$value = $order->{"get_$prop"}( 'edit' );
 			$value = is_string( $value ) ? wp_slash( $value ) : $value;
+			$skip_property = false;
+
 			switch ( $prop ) {
 				case 'date_paid':
 				case 'date_completed':
@@ -301,22 +303,13 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 					$value = 'yes' === $value ? 'true' : 'false'; // For backward compatibility, we store as true/false in DB.
 					break;
 				case 'cogs_total_value':
-					// Skip COGS if feature is disabled or order doesn't manage COGS.
-					if ( ! $order->has_cogs() || ! $this->cogs_is_enabled() ) {
-						continue 2; // Skip to next iteration of foreach.
-					}
-					// Apply the save filter.
-					$value = apply_filters( 'woocommerce_save_order_cogs_value', $value, $order );
-					if ( is_null( $value ) ) {
-						continue 2; // Filter returned null, skip saving.
-					}
-					// Delete meta if value is zero (optimization).
-					if ( 0.0 === (float) $value ) {
-						delete_post_meta( $id, $meta_key );
-						$updated_props[] = $prop;
-						continue 2;
-					}
+					$skip_property = $this->handle_cogs_value_update( $order, $value, $id, $meta_key, $updated_props, $prop );
 					break;
+			}
+
+			// Skip to next property if the handler indicated to do so.
+			if ( $skip_property ) {
+				continue;
 			}
 
 			// We want to persist internal data store keys as 'yes' or 'no' if they are boolean to maintain compatibility.
@@ -1435,5 +1428,40 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 
 		$order->set_cogs_total_value( (float) $cogs_value );
 		$order->apply_changes();
+	}
+
+	/**
+	 * Handle the update of COGS value during post meta update.
+	 * This method processes COGS-specific logic and determines if the standard update flow should be skipped.
+	 *
+	 * @param WC_Order $order The order being updated.
+	 * @param mixed    &$value Reference to the COGS value to update (will be modified by filter).
+	 * @param int      $order_id The order ID.
+	 * @param string   $meta_key The meta key being updated.
+	 * @param array    &$updated_props Reference to the array of updated properties.
+	 * @param string   $prop The property name.
+	 * @return bool True if the standard update flow should be skipped, false otherwise.
+	 */
+	private function handle_cogs_value_update( $order, &$value, $order_id, $meta_key, &$updated_props, $prop ) {
+		// Skip COGS if feature is disabled or order doesn't manage COGS.
+		if ( ! $order->has_cogs() || ! $this->cogs_is_enabled() ) {
+			return true; // Skip this property.
+		}
+
+		// Apply the save filter.
+		$value = apply_filters( 'woocommerce_save_order_cogs_value', $value, $order );
+		if ( is_null( $value ) ) {
+			return true; // Filter returned null, skip saving.
+		}
+
+		// Delete meta if value is zero (optimization).
+		if ( 0.0 === (float) $value ) {
+			delete_post_meta( $order_id, $meta_key );
+			$updated_props[] = $prop;
+			return true; // Handled, skip standard flow.
+		}
+
+		// Let the standard flow handle the update (with the filtered value).
+		return false;
 	}
 }
