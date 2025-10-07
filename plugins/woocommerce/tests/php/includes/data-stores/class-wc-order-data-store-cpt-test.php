@@ -1096,4 +1096,39 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$reloaded_order = wc_get_order( $order->get_id() );
 		$this->assertEquals( 42.00, $reloaded_order->get_cogs_total_value() );
 	}
+
+	/**
+	 * @testDox COGS value is synced during backfill via update_order_meta_from_object.
+	 */
+	public function test_cogs_synced_via_update_order_meta_from_object() {
+		$this->enable_cogs_feature();
+
+		$order = new WC_Order();
+		$this->add_product_with_cogs_to_order( $order, 15.75, 3 ); // 3 items at 15.75 each = 47.25
+		$order->calculate_cogs_total_value();
+		$order->save();
+
+		$this->assertEquals( 47.25, $order->get_cogs_total_value() );
+
+		// Verify it's in the database.
+		$this->assertEquals( 47.25, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+
+		// Delete the COGS meta to simulate it not being synced yet.
+		delete_post_meta( $order->get_id(), '_cogs_total_value' );
+		$this->assertFalse( metadata_exists( 'post', $order->get_id(), '_cogs_total_value' ) );
+
+		// Now simulate backfill by calling update_order_meta_from_object.
+		$data_store = new WC_Order_Data_Store_CPT();
+		$update_method = new \ReflectionMethod( $data_store, 'update_order_meta_from_object' );
+		$update_method->setAccessible( true );
+
+		// Reload the order to get fresh state.
+		$fresh_order = wc_get_order( $order->get_id() );
+
+		// Call update_order_meta_from_object which should sync COGS.
+		$update_method->invoke( $data_store, $fresh_order );
+
+		// Verify COGS was synced.
+		$this->assertEquals( 47.25, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+	}
 }
