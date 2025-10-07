@@ -277,6 +277,11 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 		$props_to_update = $this->get_props_to_update( $order, $meta_key_to_props );
 
 		foreach ( $props_to_update as $meta_key => $prop ) {
+			// Skip COGS property if feature is disabled to avoid triggering "doing it wrong" notices.
+			if ( 'cogs_total_value' === $prop && ! $this->cogs_is_enabled() ) {
+				continue;
+			}
+
 			$value = $order->{"get_$prop"}( 'edit' );
 			$value = is_string( $value ) ? wp_slash( $value ) : $value;
 			$skip_property = false;
