@@ -277,14 +277,22 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 		$props_to_update = $this->get_props_to_update( $order, $meta_key_to_props );
 
 		foreach ( $props_to_update as $meta_key => $prop ) {
-			// Skip COGS property if feature is disabled to avoid triggering "doing it wrong" notices.
-			if ( 'cogs_total_value' === $prop && ! $this->cogs_is_enabled() ) {
-				continue;
+			// Handle COGS property specially to avoid triggering "doing it wrong" notices when disabled.
+			if ( 'cogs_total_value' === $prop ) {
+				if ( ! $this->cogs_is_enabled() ) {
+					continue; // Skip if COGS is disabled.
+				}
+				$value = $order->get_cogs_total_value( 'edit' );
+				if ( $this->handle_cogs_value_update( $order, $value, $id, $meta_key, $updated_props, $prop ) ) {
+					continue; // Handler processed it, skip standard flow.
+				}
+				// If handler returns false, value is already set, fall through to standard flow below.
+			} else {
+				$value = $order->{"get_$prop"}( 'edit' );
 			}
 
-			$value = $order->{"get_$prop"}( 'edit' );
+			// Value is either already set (for COGS) or retrieved above.
 			$value = is_string( $value ) ? wp_slash( $value ) : $value;
-			$skip_property = false;
 
 			switch ( $prop ) {
 				case 'date_paid':
@@ -307,14 +315,6 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 					$value = is_bool( $value ) ? wc_bool_to_string( $value ) : $value;
 					$value = 'yes' === $value ? 'true' : 'false'; // For backward compatibility, we store as true/false in DB.
 					break;
-				case 'cogs_total_value':
-					$skip_property = $this->handle_cogs_value_update( $order, $value, $id, $meta_key, $updated_props, $prop );
-					break;
-			}
-
-			// Skip to next property if the handler indicated to do so.
-			if ( $skip_property ) {
-				continue;
 			}
 
 			// We want to persist internal data store keys as 'yes' or 'no' if they are boolean to maintain compatibility.
