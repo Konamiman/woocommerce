@@ -843,6 +843,25 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	}
 
 	/**
+	 * Helper method to create a test data store with protected methods exposed as public.
+	 *
+	 * @return WC_Order_Data_Store_CPT Data store with public method overrides.
+	 */
+	private function get_test_data_store() {
+		// phpcs:disable Squiz.Commenting
+		return new class() extends WC_Order_Data_Store_CPT {
+			public function get_internal_meta_keys() {
+				return $this->internal_meta_keys;
+			}
+
+			public function update_order_meta_from_object( $order ) {
+				parent::update_order_meta_from_object( $order );
+			}
+		};
+		// phpcs:enable Squiz.Commenting
+	}
+
+	/**
 	 * @testDox Saving an order does not persist its Cost of Goods Sold total value if the feature is disabled.
 	 */
 	public function test_saving_order_does_not_save_cogs_value_if_cogs_disabled() {
@@ -1058,13 +1077,7 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	 * @testDox _cogs_total_value is included in internal meta keys to prevent it from showing as custom field.
 	 */
 	public function test_cogs_total_value_is_internal_meta() {
-		// phpcs:disable Squiz.Commenting
-		$data_store = new class() extends WC_Order_Data_Store_CPT {
-			public function get_internal_meta_keys() {
-				return $this->internal_meta_keys;
-			}
-		};
-		// phpcs:enable Squiz.Commenting
+		$data_store = $this->get_test_data_store();
 
 		$this->assertContains( '_cogs_total_value', $data_store->get_internal_meta_keys(), 'COGS total value should be in internal meta keys' );
 	}
@@ -1097,13 +1110,7 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$this->assertFalse( metadata_exists( 'post', $order->get_id(), '_cogs_total_value' ) );
 
 		// Simulate what happens during compatibility mode backfill.
-		// phpcs:disable Squiz.Commenting
-		$data_store = new class() extends WC_Order_Data_Store_CPT {
-			public function update_order_meta_from_object( $order ) {
-				parent::update_order_meta_from_object( $order );
-			}
-		};
-		// phpcs:enable Squiz.Commenting
+		$data_store = $this->get_test_data_store();
 
 		// Call update_order_meta_from_object which should sync COGS.
 		$data_store->update_order_meta_from_object( $modified_order );
@@ -1147,14 +1154,8 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		// Set it to the expected value to simulate an HPOS order with COGS that needs to be synced.
 		$fresh_order->set_cogs_total_value( $expected_cogs );
 
-		// Create an anonymous class to access the protected method.
-		// phpcs:disable Squiz.Commenting
-		$data_store = new class() extends WC_Order_Data_Store_CPT {
-			public function update_order_meta_from_object( $order ) {
-				parent::update_order_meta_from_object( $order );
-			}
-		};
-		// phpcs:enable Squiz.Commenting
+		// Create a test data store to access the protected method.
+		$data_store = $this->get_test_data_store();
 
 		// Call update_order_meta_from_object which should sync COGS.
 		$data_store->update_order_meta_from_object( $fresh_order );
