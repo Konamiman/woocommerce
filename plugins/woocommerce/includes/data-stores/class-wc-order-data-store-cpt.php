@@ -1417,7 +1417,12 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 		parent::update_order_meta_from_object( $order );
 
 		// Sync COGS value during backfill if needed (for compatibility mode).
-		if ( $order->has_cogs() && $this->cogs_is_enabled() ) {
+		// Check if COGS is enabled first to avoid triggering "doing it wrong" notices.
+		if ( ! $this->cogs_is_enabled() ) {
+			return;
+		}
+
+		if ( $order->has_cogs() ) {
 			$cogs_value = $order->get_cogs_total_value( 'edit' );
 
 			/**
