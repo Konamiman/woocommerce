@@ -562,6 +562,14 @@ class WC_Order_Item_Product extends WC_Order_Item {
 	 * @return float|null The calculated value, null if the product associated to the line item no longer exists.
 	 */
 	public function calculate_cogs_value_core(): ?float {
+		// If this item already has a saved COGS value, return it.
+		// COGS should be "snapshotted" at order creation time, not recalculated from current product values.
+		$existing_value = $this->get_cogs_value( 'edit' );
+		if ( $existing_value > 0 ) {
+			return $existing_value;
+		}
+
+		// Otherwise, calculate from the product.
 		$product = $this->get_product();
 		if ( ! $product ) {
 			return null;

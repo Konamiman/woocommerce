@@ -1163,4 +1163,88 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		// Verify COGS was synced.
 		$this->assertEquals( $expected_cogs, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
 	}
+
+	/**
+	 * @testDox COGS value is synced during full backfill simulation (create, set_props, update).
+	 */
+	public function test_cogs_synced_during_full_backfill_simulation() {
+		$this->enable_cogs_feature();
+
+		$product_cost  = 22.50;
+		$product_qty   = 2;
+		$expected_cogs = $product_cost * $product_qty;
+
+		// Create an order with COGS (simulating an HPOS order).
+		$hpos_order = new WC_Order();
+		$this->add_product_with_cogs_to_order( $hpos_order, $product_cost, $product_qty );
+		$hpos_order->calculate_cogs_total_value();
+		$hpos_order->save();
+
+		$this->assertEquals( $expected_cogs, $hpos_order->get_cogs_total_value() );
+
+		// Delete the COGS meta to simulate it not being synced to CPT yet.
+		delete_post_meta( $hpos_order->get_id(), '_cogs_total_value' );
+		$this->assertFalse( metadata_exists( 'post', $hpos_order->get_id(), '_cogs_total_value' ) );
+
+		// Simulate what happens in OrdersTableDataStore::backfill_post_record().
+		$cpt_data_store = new WC_Order_Data_Store_CPT();
+		$order_class    = get_class( $hpos_order );
+		$post_order     = new $order_class();
+		$post_order->set_id( $hpos_order->get_id() );
+
+		// Read the existing CPT record (which won't have COGS meta).
+		if ( $cpt_data_store->order_exists( $hpos_order->get_id() ) ) {
+			$cpt_data_store->read( $post_order );
+		}
+
+		// This simulates line 687 of OrdersTableDataStore::backfill_post_record().
+		// Set props from the HPOS order data.
+		$post_order->set_props( $hpos_order->get_data() );
+
+		// Verify that COGS was transferred via set_props.
+		$this->assertEquals( $expected_cogs, $post_order->get_cogs_total_value(), 'COGS value should be transferred to post_order via set_props' );
+
+		// Now call update_order_from_object which should sync to database.
+		$cpt_data_store->update_order_from_object( $post_order );
+
+		// Verify COGS was synced to the database.
+		$this->assertEquals( $expected_cogs, (float) get_post_meta( $hpos_order->get_id(), '_cogs_total_value', true ), 'COGS value should be synced to post meta' );
+	}
+
+	/**
+	 * @testDox Item COGS values are preserved and not recalculated when order totals are recalculated.
+	 */
+	public function test_item_cogs_values_are_preserved_on_recalculation() {
+		$this->enable_cogs_feature();
+
+		$product_cost  = 10.00;
+		$product_qty   = 5;
+		$expected_item_cogs = $product_cost * $product_qty;
+
+		// Create an order with COGS.
+		$order = new WC_Order();
+		$this->add_product_with_cogs_to_order( $order, $product_cost, $product_qty );
+		$order->calculate_totals();
+		$order->save();
+
+		// Verify the item has the expected COGS value saved.
+		$items = $order->get_items();
+		$item  = reset( $items );
+		$this->assertEquals( $expected_item_cogs, $item->get_cogs_value() );
+
+		// Now change the product COGS to a different value (simulating a product price update).
+		$product = $item->get_product();
+		$product->set_cogs_value( 99.99 );
+		$product->save();
+
+		// Reload the order and recalculate totals.
+		$reloaded_order = wc_get_order( $order->get_id() );
+		$reloaded_order->calculate_totals();
+
+		// The item COGS should still be the original value, not recalculated from the new product COGS.
+		$reloaded_items = $reloaded_order->get_items();
+		$reloaded_item  = reset( $reloaded_items );
+		$this->assertEquals( $expected_item_cogs, $reloaded_item->get_cogs_value(), 'Item COGS should be preserved and not recalculated from product' );
+		$this->assertEquals( $expected_item_cogs, $reloaded_order->get_cogs_total_value(), 'Order COGS total should match preserved item COGS' );
+	}
 }
