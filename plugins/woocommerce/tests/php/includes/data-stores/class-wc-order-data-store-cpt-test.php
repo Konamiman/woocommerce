@@ -1283,4 +1283,53 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$this->assertEquals( $expected_cogs, $reloaded_item->get_cogs_value(), 'Item without saved COGS should calculate from product' );
 		$this->assertEquals( $expected_cogs, $reloaded_order->get_cogs_total_value(), 'Order total should reflect calculated item COGS' );
 	}
+
+	/**
+	 * @testDox Refund items always recalculate COGS based on their negative quantity.
+	 */
+	public function test_refund_items_recalculate_cogs() {
+		$this->enable_cogs_feature();
+
+		$product_cost = 20.00;
+		$product_qty  = 10;
+		$refund_qty   = 3;
+		$expected_order_cogs = $product_cost * $product_qty;
+		$expected_refund_cogs = -( $product_cost * $refund_qty );
+
+		// Create an order with COGS.
+		$order = new WC_Order();
+		$this->add_product_with_cogs_to_order( $order, $product_cost, $product_qty );
+		$order->calculate_totals();
+		$order->save();
+
+		$this->assertEquals( $expected_order_cogs, $order->get_cogs_total_value() );
+
+		// Get the order item.
+		$order_items = array_values( $order->get_items( 'line_item' ) );
+		$order_item  = $order_items[0];
+
+		// Create a refund.
+		$refund = wc_create_refund(
+			array(
+				'order_id'   => $order->get_id(),
+				'amount'     => $product_cost * $refund_qty * $product_qty / $product_qty,
+				'reason'     => 'testing',
+				'line_items' => array(
+					$order_item->get_id() => array(
+						'qty'          => $refund_qty,
+						'refund_total' => $product_cost * $refund_qty,
+					),
+				),
+			)
+		);
+		$refund->save();
+
+		// Verify the refund has the correct COGS (negative value).
+		$this->assertEquals( $expected_refund_cogs, $refund->get_cogs_total_value(), 'Refund should have negative COGS' );
+
+		// Recalculate order totals and verify COGS is adjusted for the refund.
+		$order->calculate_totals();
+		$expected_final_cogs = $expected_order_cogs + $expected_refund_cogs;
+		$this->assertEquals( $expected_final_cogs, $order->get_cogs_total_value(), 'Order COGS should be reduced by refund amount' );
+	}
 }
