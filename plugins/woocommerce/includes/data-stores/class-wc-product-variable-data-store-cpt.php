@@ -388,11 +388,30 @@ class WC_Product_Variable_Data_Store_CPT extends WC_Product_Data_Store_CPT imple
 				}
 			}
 
-			/**
-			 * Give plugins one last chance to filter the variation prices array which has been generated and store locally to the class.
-			 * This value may differ from the transient cache. It is filtered once before storing locally.
-			 */
-			$this->prices_array[ $price_hash ] = apply_filters( 'woocommerce_variation_prices', $transient_cached_prices_array[ $price_hash ], $product, $for_display );
+		/**
+		 * Filters the variation prices array for a variable product.
+		 *
+		 * This filter gives plugins one last chance to modify the variation prices array which has been
+		 * generated and will be stored locally to the class. This value may differ from the transient cache.
+		 * It is filtered once before storing locally.
+		 *
+		 * The prices array contains three keys (price, regular_price, sale_price), each containing an array
+		 * of variation IDs as keys and their corresponding formatted prices as values.
+		 *
+		 * @since 3.0.0
+		 *
+		 * @param array      $prices_array {
+		 *     Associative array of variation prices indexed by variation ID.
+		 *
+		 *     @type array $price         Array of active prices (variation_id => price).
+		 *     @type array $regular_price Array of regular prices (variation_id => price).
+		 *     @type array $sale_price    Array of sale prices (variation_id => price).
+		 * }
+		 * @param WC_Product $product      The variable product object.
+		 * @param bool       $for_display  Whether prices are being retrieved for display. If true, prices are adapted
+		 *                                  based on the 'woocommerce_tax_display_shop' setting (including or excluding taxes).
+		 */
+		$this->prices_array[ $price_hash ] = apply_filters( 'woocommerce_variation_prices', $transient_cached_prices_array[ $price_hash ], $product, $for_display );
 		}
 		return $this->prices_array[ $price_hash ];
 	}
