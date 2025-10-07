@@ -1448,7 +1448,15 @@ class WC_Order_Data_Store_CPT extends Abstract_WC_Order_Data_Store_CPT implement
 			return true; // Skip this property.
 		}
 
-		// Apply the save filter.
+		/**
+		 * Filter to customize the Cost of Goods Sold value that gets saved for a given order,
+		 * or to suppress the saving of the value (so that custom storage can be used).
+		 *
+		 * @since 9.5.0
+		 *
+		 * @param float|null $cogs_value The value to be written to the database. If returned as null, nothing will be written.
+		 * @param WC_Abstract_Order $item The order for which the value is being saved.
+		 */
 		$value = apply_filters( 'woocommerce_save_order_cogs_value', $value, $order );
 		if ( is_null( $value ) ) {
 			return true; // Filter returned null, skip saving.
