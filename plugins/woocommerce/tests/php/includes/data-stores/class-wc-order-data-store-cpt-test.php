@@ -1062,7 +1062,7 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 	}
 
 	/**
-	 * @testDox COGS value is included in the meta_key_to_props mapping for compatibility mode sync.
+	 * @testDox COGS value is synced via update_order_meta_from_object for compatibility mode.
 	 */
 	public function test_cogs_in_meta_key_to_props_for_sync() {
 		$this->enable_cogs_feature();
@@ -1070,23 +1070,25 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		$order = new WC_Order();
 		$this->add_product_with_cogs_to_order( $order, 10.50, 2 ); // 2 items at 10.50 each = 21.00
 		$order->calculate_cogs_total_value();
-		$this->assertEquals( 21.00, $order->get_cogs_total_value() );
+		$order->save();
 
-		// Create a modified order with different COGS value.
-		$modified_order = clone $order;
+		$this->assertEquals( 21.00, $order->get_cogs_total_value() );
+		$this->assertEquals( 21.00, (float) get_post_meta( $order->get_id(), '_cogs_total_value', true ) );
+
+		// Reload the order and modify COGS value to simulate HPOS order with different value.
+		$modified_order = wc_get_order( $order->get_id() );
 		$modified_order->set_cogs_total_value( 42.00 );
+
+		// Delete the post meta to simulate it not being synced yet.
+		delete_post_meta( $order->get_id(), '_cogs_total_value' );
+		$this->assertFalse( metadata_exists( 'post', $order->get_id(), '_cogs_total_value' ) );
 
 		// Simulate what happens during compatibility mode backfill.
 		$data_store = new WC_Order_Data_Store_CPT();
-
-		// Use reflection to call update_post_meta directly.
-		$update_method = new \ReflectionMethod( $data_store, 'update_post_meta' );
+		$update_method = new \ReflectionMethod( $data_store, 'update_order_meta_from_object' );
 		$update_method->setAccessible( true );
 
-		// Save the order first.
-		$order->save();
-
-		// Now "sync" the modified value using update_post_meta.
+		// Call update_order_meta_from_object which should sync COGS.
 		$update_method->invoke( $data_store, $modified_order );
 
 		// Verify the COGS value was synced to the database.
