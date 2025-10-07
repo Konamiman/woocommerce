@@ -1119,13 +1119,17 @@ class WC_Order_Data_Store_CPT_Test extends WC_Unit_Test_Case {
 		delete_post_meta( $order->get_id(), '_cogs_total_value' );
 		$this->assertFalse( metadata_exists( 'post', $order->get_id(), '_cogs_total_value' ) );
 
+		// Reload the order to get fresh state.
+		$fresh_order = wc_get_order( $order->get_id() );
+
+		// The fresh order will have 0 COGS since we deleted the meta.
+		// Set it to the expected value to simulate an HPOS order with COGS that needs to be synced.
+		$fresh_order->set_cogs_total_value( 47.25 );
+
 		// Now simulate backfill by calling update_order_meta_from_object.
 		$data_store = new WC_Order_Data_Store_CPT();
 		$update_method = new \ReflectionMethod( $data_store, 'update_order_meta_from_object' );
 		$update_method->setAccessible( true );
-
-		// Reload the order to get fresh state.
-		$fresh_order = wc_get_order( $order->get_id() );
 
 		// Call update_order_meta_from_object which should sync COGS.
 		$update_method->invoke( $data_store, $fresh_order );
