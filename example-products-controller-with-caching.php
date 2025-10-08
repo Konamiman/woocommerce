@@ -61,29 +61,9 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		);
 	}
 
-	/**
-	 * Extract product IDs from response data.
-	 *
-	 * @param array $data Response data.
-	 * @return array Product IDs.
-	 */
-	protected function extract_entity_ids( $data ) {
-		$product_ids = array();
-
-		if ( $this->is_collection( $data ) ) {
-			// Collection response
-			foreach ( $data as $item ) {
-				if ( isset( $item['id'] ) ) {
-					$product_ids[] = $item['id'];
-				}
-			}
-		} elseif ( isset( $data['id'] ) ) {
-			// Single product response
-			$product_ids[] = $data['id'];
-		}
-
-		return array_unique( array_filter( $product_ids ) );
-	}
+	// Note: extract_entity_ids() is now provided by the base class.
+	// It uses extract_entity_id() which defaults to $entity['id'] ?? null.
+	// No need to override unless you have special ID extraction logic.
 
 	/**
 	 * Remove non-deterministic fields from data.

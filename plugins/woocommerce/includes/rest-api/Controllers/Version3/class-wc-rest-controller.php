@@ -743,9 +743,21 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Extract entity ID from a single entity array.
+	 *
+	 * Override in child classes if your entities use a different ID field.
+	 *
+	 * @param array $entity Single entity data.
+	 * @return int|null Entity ID or null if not found.
+	 */
+	protected function extract_entity_id( $entity ) {
+		return $entity['id'] ?? null;
+	}
+
+	/**
 	 * Extract entity IDs from response data.
 	 *
-	 * Override in child classes to extract IDs for cache invalidation tracking.
+	 * Most child classes won't need to override this - override extract_entity_id() instead.
 	 *
 	 * @param array $data Response data.
 	 * @return array Array of entity IDs.
@@ -756,13 +768,17 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 		if ( $this->is_collection( $data ) ) {
 			// Collection - extract IDs from each item.
 			foreach ( $data as $item ) {
-				if ( isset( $item['id'] ) ) {
-					$ids[] = $item['id'];
+				$id = $this->extract_entity_id( $item );
+				if ( null !== $id ) {
+					$ids[] = $id;
 				}
 			}
-		} elseif ( isset( $data['id'] ) ) {
-			// Single item - just the one ID.
-			$ids[] = $data['id'];
+		} else {
+			// Single item.
+			$id = $this->extract_entity_id( $data );
+			if ( null !== $id ) {
+				$ids[] = $id;
+			}
 		}
 
 		return array_unique( array_filter( $ids ) );

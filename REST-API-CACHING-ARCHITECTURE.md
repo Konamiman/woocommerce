@@ -38,7 +38,13 @@ protected function get_cache_hash_filters( $request ) {
     // Return array of filter names
 }
 
-// Required: Extract entity IDs from response for cache tracking
+// Optional: Extract ID from a single entity (default: $entity['id'] ?? null)
+protected function extract_entity_id( $entity ) {
+    // Return entity ID or null
+}
+
+// Optional: Extract all IDs from response (base class has full implementation)
+// Only override if you need special logic (e.g., extracting parent IDs too)
 protected function extract_entity_ids( $data ) {
     // Return array of entity IDs
 }
@@ -191,32 +197,65 @@ protected function get_cache_hash_filters( $request ) {
 }
 ```
 
-### Step 4: Implement extract_entity_ids()
+### Step 4: (Optional) Implement extract_entity_id()
+
+**For most controllers, you can skip this step!** The base class already provides a full implementation of `extract_entity_ids()` that works for standard entities.
+
+Only override `extract_entity_id()` if your entities use a different ID field:
 
 ```php
+// Example: If your entities use 'entity_id' instead of 'id'
+protected function extract_entity_id( $entity ) {
+    return $entity['entity_id'] ?? null;
+}
+```
+
+Only override `extract_entity_ids()` if you need special logic (e.g., extracting multiple related IDs):
+
+```php
+// Example: Variations also track parent product ID
 protected function extract_entity_ids( $data ) {
     $ids = array();
     
-    // Use the built-in is_collection() helper
     if ( $this->is_collection( $data ) ) {
-        // Collection - extract ID from each item
         foreach ( $data as $item ) {
-            if ( isset( $item['id'] ) ) {
-                $ids[] = $item['id'];
+            $id = $this->extract_entity_id( $item );
+            if ( null !== $id ) {
+                $ids[] = $id;
+                
+                // Also track parent ID for cache invalidation
+                if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
+                    $ids[] = $item['parent_id'];
+                }
             }
         }
-    } elseif ( isset( $data['id'] ) ) {
-        // Single entity
-        $ids[] = $data['id'];
+    } else {
+        $id = $this->extract_entity_id( $data );
+        if ( null !== $id ) {
+            $ids[] = $id;
+            
+            if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
+                $ids[] = $data['parent_id'];
+            }
+        }
     }
     
     return array_unique( array_filter( $ids ) );
 }
 ```
 
-**Note**: The base class provides `is_collection()` which checks if `$data[0]` exists. You can override this method if you need custom collection detection logic.
+**Note**: The base class provides the full implementation using `is_collection()` and `extract_entity_id()`.
 
-### Step 5: (Optional) Implement remove_non_deterministic_fields()
+### Step 5: (Optional) Override extract_entity_id() for non-standard ID fields
+
+```php
+// Only needed if your entities use a different ID field name
+protected function extract_entity_id( $entity ) {
+    return $entity['custom_id'] ?? null;
+}
+```
+
+### Step 6: (Optional) Implement remove_non_deterministic_fields()
 
 ```php
 protected function remove_non_deterministic_fields( $data ) {
@@ -249,7 +288,7 @@ protected function remove_non_deterministic_fields( $data ) {
 }
 ```
 
-### Step 6: (Optional) Implement get_single_entity_cache_key()
+### Step 7: (Optional) Implement get_single_entity_cache_key()
 
 ```php
 protected function get_single_entity_cache_key( $entity_id ) {
@@ -257,7 +296,7 @@ protected function get_single_entity_cache_key( $entity_id ) {
 }
 ```
 
-### Step 7: Hook into Entity Changes
+### Step 8: Hook into Entity Changes
 
 ```php
 add_action( 'your_entity_updated', function( $entity_id ) {

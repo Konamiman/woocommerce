@@ -124,23 +124,8 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
         );
     }
     
-    protected function extract_entity_ids( $data ) {
-        $product_ids = array();
-        
-        if ( $this->is_collection( $data ) ) {
-            // Collection
-            foreach ( $data as $item ) {
-                if ( isset( $item['id'] ) ) {
-                    $product_ids[] = $item['id'];
-                }
-            }
-        } elseif ( isset( $data['id'] ) ) {
-            // Single product
-            $product_ids[] = $data['id'];
-        }
-        
-        return array_unique( array_filter( $product_ids ) );
-    }
+    // Note: extract_entity_ids() is provided by base class.
+    // No need to override unless you need special ID extraction logic.
     
     protected function remove_non_deterministic_fields( $data ) {
         // Remove related_ids (random sample)

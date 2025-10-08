@@ -62,36 +62,43 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 
 	/**
 	 * Extract variation IDs from response data.
+	 * 
+	 * For variations, we need to track both the variation ID and parent product ID
+	 * for proper cache invalidation.
 	 *
 	 * @param array $data Response data.
-	 * @return array Variation IDs.
+	 * @return array Variation and parent product IDs.
 	 */
 	protected function extract_entity_ids( $data ) {
-		$variation_ids = array();
+		$ids = array();
 
 		if ( $this->is_collection( $data ) ) {
 			// Collection response
 			foreach ( $data as $item ) {
-				if ( isset( $item['id'] ) ) {
-					$variation_ids[] = $item['id'];
+				$id = $this->extract_entity_id( $item );
+				if ( null !== $id ) {
+					$ids[] = $id;
 					
 					// Also track parent product ID for cache invalidation
 					if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
-						$variation_ids[] = $item['parent_id'];
+						$ids[] = $item['parent_id'];
 					}
 				}
 			}
-		} elseif ( isset( $data['id'] ) ) {
+		} else {
 			// Single variation response
-			$variation_ids[] = $data['id'];
-			
-			// Also track parent product ID
-			if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
-				$variation_ids[] = $data['parent_id'];
+			$id = $this->extract_entity_id( $data );
+			if ( null !== $id ) {
+				$ids[] = $id;
+				
+				// Also track parent product ID
+				if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
+					$ids[] = $data['parent_id'];
+				}
 			}
 		}
 
-		return array_unique( array_filter( $variation_ids ) );
+		return array_unique( array_filter( $ids ) );
 	}
 
 	/**
