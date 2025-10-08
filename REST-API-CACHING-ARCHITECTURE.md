@@ -192,18 +192,20 @@ protected function get_cache_hash_filters( $request ) {
 protected function extract_entity_ids( $data ) {
     $ids = array();
     
-    // Single entity
-    if ( isset( $data['id'] ) && ! isset( $data[0] ) ) {
-        $ids[] = $data['id'];
-    }
+    // Note: $data is always an array!
+    // - Collections are indexed arrays with numeric keys: [0 => [...], 1 => [...]]
+    // - Single items are associative arrays: ['id' => 123, 'name' => '...']
     
-    // Collection
-    if ( is_array( $data ) && isset( $data[0] ) ) {
+    // Collection - indexed array with numeric keys
+    if ( isset( $data[0] ) ) {
         foreach ( $data as $item ) {
             if ( isset( $item['id'] ) ) {
                 $ids[] = $item['id'];
             }
         }
+    } elseif ( isset( $data['id'] ) ) {
+        // Single entity - associative array
+        $ids[] = $data['id'];
     }
     
     return array_unique( array_filter( $ids ) );
@@ -217,6 +219,22 @@ protected function remove_non_deterministic_fields( $data ) {
     // Remove fields that change on each request
     // e.g., random recommendations, computed timestamps
     
+    // Collection - indexed array
+    if ( isset( $data[0] ) ) {
+        $clean_data = array();
+        foreach ( $data as $key => $item ) {
+            if ( isset( $item['random_recommendations'] ) ) {
+                $clean_item = $item;
+                unset( $clean_item['random_recommendations'] );
+                $clean_data[ $key ] = $clean_item;
+            } else {
+                $clean_data[ $key ] = $item;
+            }
+        }
+        return $clean_data;
+    }
+    
+    // Single item - associative array
     if ( isset( $data['random_recommendations'] ) ) {
         $clean_data = $data;
         unset( $clean_data['random_recommendations'] );

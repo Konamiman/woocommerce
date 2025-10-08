@@ -70,18 +70,16 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	protected function extract_entity_ids( $data ) {
 		$product_ids = array();
 
-		// Single product response
-		if ( isset( $data['id'] ) && ! isset( $data[0] ) ) {
-			$product_ids[] = $data['id'];
-		}
-
-		// Collection response
-		if ( is_array( $data ) && isset( $data[0] ) ) {
+		// Collection response - indexed array with numeric keys
+		if ( isset( $data[0] ) ) {
 			foreach ( $data as $item ) {
 				if ( isset( $item['id'] ) ) {
 					$product_ids[] = $item['id'];
 				}
 			}
+		} elseif ( isset( $data['id'] ) ) {
+			// Single product response - associative array
+			$product_ids[] = $data['id'];
 		}
 
 		return array_unique( array_filter( $product_ids ) );
@@ -94,18 +92,11 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @return array Cleaned data.
 	 */
 	protected function remove_non_deterministic_fields( $data ) {
-		// Handle single product
-		if ( isset( $data['related_ids'] ) ) {
-			$clean_data = $data;
-			unset( $clean_data['related_ids'] );
-			return $clean_data;
-		}
-
-		// Handle product collection
-		if ( is_array( $data ) ) {
+		// Collection response - indexed array
+		if ( isset( $data[0] ) ) {
 			$clean_data = array();
 			foreach ( $data as $key => $product ) {
-				if ( is_array( $product ) && isset( $product['related_ids'] ) ) {
+				if ( isset( $product['related_ids'] ) ) {
 					$clean_product = $product;
 					unset( $clean_product['related_ids'] );
 					$clean_data[ $key ] = $clean_product;
@@ -113,6 +104,13 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 					$clean_data[ $key ] = $product;
 				}
 			}
+			return $clean_data;
+		}
+		
+		// Single product response - associative array
+		if ( isset( $data['related_ids'] ) ) {
+			$clean_data = $data;
+			unset( $clean_data['related_ids'] );
 			return $clean_data;
 		}
 

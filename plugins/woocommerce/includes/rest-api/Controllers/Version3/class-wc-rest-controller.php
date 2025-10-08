@@ -737,7 +737,23 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	 * @return array Array of entity IDs.
 	 */
 	protected function extract_entity_ids( $data ) {
-		return array();
+		$ids = array();
+
+		// Check if this is a collection (indexed array) vs single item (associative array).
+		// Collections have numeric keys starting at 0.
+		if ( isset( $data[0] ) ) {
+			// Collection - extract IDs from each item.
+			foreach ( $data as $item ) {
+				if ( isset( $item['id'] ) ) {
+					$ids[] = $item['id'];
+				}
+			}
+		} elseif ( isset( $data['id'] ) ) {
+			// Single item - just the one ID.
+			$ids[] = $data['id'];
+		}
+
+		return array_unique( array_filter( $ids ) );
 	}
 
 	/**

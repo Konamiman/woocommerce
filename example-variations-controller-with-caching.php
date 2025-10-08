@@ -69,27 +69,25 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	protected function extract_entity_ids( $data ) {
 		$variation_ids = array();
 
-		// Single variation response
-		if ( isset( $data['id'] ) && ! isset( $data[0] ) ) {
+		// Collection response - indexed array
+		if ( isset( $data[0] ) ) {
+			foreach ( $data as $item ) {
+				if ( isset( $item['id'] ) ) {
+					$variation_ids[] = $item['id'];
+					
+					// Also track parent product ID for cache invalidation
+					if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
+						$variation_ids[] = $item['parent_id'];
+					}
+				}
+			}
+		} elseif ( isset( $data['id'] ) ) {
+			// Single variation response - associative array
 			$variation_ids[] = $data['id'];
 			
 			// Also track parent product ID
 			if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
 				$variation_ids[] = $data['parent_id'];
-			}
-		}
-
-		// Collection response
-		if ( is_array( $data ) && isset( $data[0] ) ) {
-			foreach ( $data as $item ) {
-				if ( isset( $item['id'] ) ) {
-					$variation_ids[] = $item['id'];
-					
-					// Also track parent product ID
-					if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
-						$variation_ids[] = $item['parent_id'];
-					}
-				}
 			}
 		}
 
