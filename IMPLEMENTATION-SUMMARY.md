@@ -9,24 +9,30 @@ A generalized, extensible REST API caching system for WooCommerce that:
 3. ✅ **Auto-invalidates on hook changes** (extension activation/deactivation)
 4. ✅ **Precisely invalidates collections** using reverse index
 5. ✅ **Works for any entity type** (products, orders, customers, etc.)
-6. ✅ **Zero breaking changes** - opt-in by design
+6. ✅ **Works with both base classes** (WC_REST_Controller and RestApiControllerBase)
+7. ✅ **Zero breaking changes** - opt-in by design
 
 ## Architecture Overview
 
 ### Core Components
 
 ```
-WC_REST_Controller (Base Class)
-├── Caching enabled via $cache_enabled property
+WC_REST_Cacheable Trait
+├── All caching logic (~200 lines)
 ├── Hooks into rest_pre_dispatch (check cache)
 ├── Hooks into rest_post_dispatch (store cache)
 └── Overridable methods for entity-specific logic
 
+WC_REST_Controller               RestApiControllerBase
+├── use WC_REST_Cacheable        ├── use WC_REST_Cacheable
+├── Calls register_cache_hooks() ├── Calls register_cache_hooks()
+└── (existing methods)           └── (existing methods)
+
 Entity Controllers (e.g., WC_REST_Products_Controller)
+├── Set $cache_enabled = true
 ├── Override get_cache_key_info()
 ├── Override get_cache_hash_filters()
-├── Override extract_entity_ids()
-├── Override remove_non_deterministic_fields()
+├── Override remove_non_deterministic_fields() (optional)
 └── Call invalidate_entity_cache() on changes
 ```
 
@@ -270,37 +276,69 @@ add_filter( 'woocommerce_rest_api_cache_hash', function( $hash_data, $request, $
 ## Files Modified
 
 ### Core Changes
-1. `/workspace/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php`
-   - Added `$cache_enabled` property
-   - Added constructor with hook registration
-   - Added 15 new methods for caching functionality
-   - All changes are additive (no breaking changes)
+1. **`trait-wc-rest-cacheable.php`** (NEW)
+   - All caching logic (~200 lines)
+   - Reusable across both base classes
+   - Fully documented with overridable methods
+
+2. **`class-wc-rest-controller.php`** (MODIFIED)
+   - Added `use WC_REST_Cacheable;`
+   - Calls `register_cache_hooks()` in constructor
+   - **Net change**: ~5 lines (trait does the heavy lifting)
+
+3. **`RestApiControllerBase.php`** (MODIFIED)
+   - Added `use WC_REST_Cacheable;`
+   - Calls `register_cache_hooks()` in `register()`
+   - **Net change**: ~5 lines
 
 ### Example Implementations (for reference)
-1. `/workspace/example-products-controller-with-caching.php`
-   - Shows how to implement caching in products controller
+1. **`example-products-controller-with-caching.php`**
+   - Shows how to implement caching in WC_REST_Products_Controller
    
-2. `/workspace/example-variations-controller-with-caching.php`
-   - Shows how to implement caching in variations controller
+2. **`example-variations-controller-with-caching.php`**
+   - Shows how to implement caching in WC_REST_Product_Variations_Controller
+
+3. **`example-restapi-controllerbase-with-caching.php`** (NEW)
+   - Shows how to implement caching with RestApiControllerBase
+   - Demonstrates modern controller pattern
 
 ### Documentation
-1. `/workspace/REST-API-CACHING-ARCHITECTURE.md`
+1. **`REST-API-CACHING-ARCHITECTURE.md`**
    - Complete architecture documentation
    - Implementation guide
    - Extension developer guide
    - Best practices
 
-2. `/workspace/IMPLEMENTATION-SUMMARY.md` (this file)
+2. **`TRAIT-ARCHITECTURE.md`** (NEW)
+   - Why we use a trait
+   - How trait overriding works
+   - Examples for both base classes
+   - Migration guide
+
+3. **`HOOK-REGISTRATION-ANALYSIS.md`** (NEW)
+   - When controllers are instantiated
+   - How hooks are registered
+   - Performance analysis
+   - Route matching explanation
+
+4. **`ABSTRACTION-IMPROVEMENTS.md`**
+   - Helper method improvements
+   - is_collection() and extract_entity_id()
+   - Code quality improvements
+
+5. **`IMPLEMENTATION-SUMMARY.md`** (this file)
    - High-level summary
    - Performance metrics
    - Migration guide
 
 ## Migration Path
 
-### Phase 1: Core Implementation (This PR)
-- ✅ Add caching infrastructure to `WC_REST_Controller`
+### Phase 1: Core Infrastructure (This PR)
+- ✅ Create `WC_REST_Cacheable` trait with all caching logic
+- ✅ Integrate trait into `WC_REST_Controller`
+- ✅ Integrate trait into `RestApiControllerBase`
 - ✅ Safe defaults (no caching unless opted in)
-- ✅ Documentation and examples
+- ✅ Comprehensive documentation and examples
 
 ### Phase 2: Enable for Products (Next PR)
 - Implement caching in `WC_REST_Products_Controller`

@@ -11,6 +11,9 @@ use WP_Error;
 use InvalidArgumentException;
 use Exception;
 
+// Load the cacheable trait.
+require_once WC_ABSPATH . 'includes/rest-api/Traits/trait-wc-rest-cacheable.php';
+
 /**
  * Base class for REST API controllers defined inside the 'src' directory.
  *
@@ -74,6 +77,8 @@ use Exception;
  */
 abstract class RestApiControllerBase implements RegisterHooksInterface {
 
+	use WC_REST_Cacheable;
+
 	/**
 	 * The root namespace for the JSON REST API endpoints.
 	 *
@@ -86,6 +91,7 @@ abstract class RestApiControllerBase implements RegisterHooksInterface {
 	 */
 	public function register() {
 		add_filter( 'woocommerce_rest_api_get_rest_namespaces', array( $this, 'handle_woocommerce_rest_api_get_rest_namespaces' ) );
+		$this->register_cache_hooks();
 	}
 
 	/**
