@@ -6,9 +6,11 @@
  */
 
 /**
- * Add this to WC_REST_Products_Controller class
+ * Example implementation - DO NOT USE DIRECTLY
+ * This is a reference implementation showing how to add caching to the products controller.
+ * The actual implementation is in class-wc-rest-products-controller.php
  */
-class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
+class Example_WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 
 	/**
 	 * Enable caching for this controller.

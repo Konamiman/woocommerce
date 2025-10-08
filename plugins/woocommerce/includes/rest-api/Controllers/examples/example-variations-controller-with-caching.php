@@ -6,9 +6,11 @@
  */
 
 /**
- * Add this to WC_REST_Product_Variations_Controller class
+ * Example implementation - DO NOT USE DIRECTLY
+ * This is a reference implementation showing how to add caching to the variations controller.
+ * The actual implementation is in class-wc-rest-product-variations-controller.php
  */
-class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V2_Controller {
+class Example_WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V2_Controller {
 
 	/**
 	 * Enable caching for this controller.
