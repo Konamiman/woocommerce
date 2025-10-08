@@ -25,9 +25,6 @@ Existing endpoints continue to work without modification. Caching is opt-in by o
 #### Methods to Override (Opt-In)
 
 ```php
-// Enable caching by setting this property
-protected $cache_enabled = true;
-
 // Required: Determine cache key for the request
 protected function get_cache_key_info( $request ) {
     // Return array with 'type' and 'key', or null to skip caching
@@ -147,11 +144,18 @@ invalidate_entity_cache(123)
 
 ## Implementation Guide
 
-### Step 1: Enable Caching
+### Step 1: Use the Trait
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 class WC_REST_Your_Entity_Controller extends WC_REST_CRUD_Controller {
-    protected $cache_enabled = true;
+    use RestApiCache;
+    
+    public function __construct() {
+        parent::__construct();
+        $this->register_cache_hooks();
+    }
     
     // ... implement required methods
 }

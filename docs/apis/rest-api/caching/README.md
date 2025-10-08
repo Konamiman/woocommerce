@@ -137,10 +137,17 @@ invalidate_entity_cache(123)
 ### Enable Caching in 3 Steps
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
     
-    // Step 1: Enable caching
-    protected $cache_enabled = true;
+    // Step 1: Use the trait
+    use RestApiCache;
+    
+    public function __construct() {
+        parent::__construct();
+        $this->register_cache_hooks();
+    }
     
     // Step 2: Define cache keys
     protected function get_cache_key_info( $request ) {

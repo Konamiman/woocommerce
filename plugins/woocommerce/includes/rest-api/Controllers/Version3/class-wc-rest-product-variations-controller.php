@@ -30,13 +30,6 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	use RestApiCache;
 
 	/**
-	 * Enable REST API caching for variation endpoints.
-	 *
-	 * @var bool
-	 */
-	protected $cache_enabled = true;
-
-	/**
 	 * Endpoint namespace.
 	 *
 	 * @var string

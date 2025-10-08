@@ -29,7 +29,6 @@ This PR implements a **trait-based caching infrastructure** for WooCommerce REST
 - **Changes**:
   - Added `use Automattic\WooCommerce\Internal\Traits\RestApiCache;`
   - Added constructor calling `register_cache_hooks()`
-  - Set `$cache_enabled = true`
   - Implemented caching methods
 - **Impact**: Products endpoints now have caching enabled
 
@@ -38,7 +37,6 @@ This PR implements a **trait-based caching infrastructure** for WooCommerce REST
 - **Changes**:
   - Added `use Automattic\WooCommerce\Internal\Traits\RestApiCache;`
   - Added constructor calling `register_cache_hooks()`
-  - Set `$cache_enabled = true`
   - Implemented caching methods
 - **Impact**: Variations endpoints now have caching enabled
 
@@ -86,10 +84,17 @@ This PR implements a **trait-based caching infrastructure** for WooCommerce REST
 ### Enable Caching in a Controller
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
     
-    // 1. Enable caching
-    protected $cache_enabled = true;
+    // 1. Use the trait
+    use RestApiCache;
+    
+    public function __construct() {
+        parent::__construct();
+        $this->register_cache_hooks();
+    }
     
     // 2. Define cache keys
     protected function get_cache_key_info( $request ) {

@@ -17,20 +17,12 @@ use WP_REST_Server;
  *
  * Usage:
  * 1. Add 'use RestApiCache;' to your controller class
- * 2. Set $cache_enabled = true
- * 3. Implement required methods (or use defaults)
- * 4. Call register_cache_hooks() in constructor or register() method
+ * 2. Implement required methods
+ * 3. Call register_cache_hooks() in constructor or register() method
  *
  * @since   9.5.0
  */
 trait RestApiCache {
-
-	/**
-	 * Whether REST API caching is enabled for this controller.
-	 *
-	 * @var bool
-	 */
-	protected $cache_enabled = false;
 
 	/**
 	 * Register cache-related hooks.
@@ -38,19 +30,8 @@ trait RestApiCache {
 	 * Call this from the controller's constructor or init method.
 	 */
 	protected function register_cache_hooks() {
-		if ( $this->is_cache_enabled() ) {
-			add_filter( 'rest_pre_dispatch', array( $this, 'maybe_return_cached_response' ), 10, 3 );
-			add_filter( 'rest_post_dispatch', array( $this, 'maybe_cache_response' ), 10, 3 );
-		}
-	}
-
-	/**
-	 * Check if caching is enabled for this controller.
-	 *
-	 * @return bool
-	 */
-	protected function is_cache_enabled() {
-		return $this->cache_enabled;
+		add_filter( 'rest_pre_dispatch', array( $this, 'maybe_return_cached_response' ), 10, 3 );
+		add_filter( 'rest_post_dispatch', array( $this, 'maybe_cache_response' ), 10, 3 );
 	}
 
 	/**

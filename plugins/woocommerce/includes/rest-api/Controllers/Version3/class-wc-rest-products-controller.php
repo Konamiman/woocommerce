@@ -31,13 +31,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	use RestApiCache;
 
 	/**
-	 * Enable REST API caching for product endpoints.
-	 *
-	 * @var bool
-	 */
-	protected $cache_enabled = true;
-
-	/**
 	 * Endpoint namespace.
 	 *
 	 * @var string

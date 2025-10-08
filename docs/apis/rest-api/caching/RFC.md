@@ -317,9 +317,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
         $this->register_cache_hooks();  // Register cache hooks
     }
     
-    // Enable caching
-    protected $cache_enabled = true;
-    
     // Required: Define cache keys for this endpoint
     protected function get_cache_key_info( $request ) {
         // Returns array with cache key info or null
