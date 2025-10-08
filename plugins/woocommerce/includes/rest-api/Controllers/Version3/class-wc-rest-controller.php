@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-require_once __DIR__ . '/../Traits/trait-wc-rest-cacheable.php';
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 
 /**
  * Abstract Rest Controller Class
@@ -31,7 +31,7 @@ require_once __DIR__ . '/../Traits/trait-wc-rest-cacheable.php';
  */
 abstract class WC_REST_Controller extends WP_REST_Controller {
 
-	use WC_REST_Cacheable;
+	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.

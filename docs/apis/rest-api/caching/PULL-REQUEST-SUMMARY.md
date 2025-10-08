@@ -12,9 +12,10 @@ This PR implements a **trait-based caching infrastructure** for WooCommerce REST
 
 ### Core Implementation (3 files)
 
-#### 1. **NEW**: `includes/rest-api/Traits/trait-wc-rest-cacheable.php`
-- **Lines**: ~470
-- **Purpose**: Reusable caching trait for all REST API controllers
+#### 1. **NEW**: `src/Internal/Traits/RestApiCache.php`
+- **Lines**: ~320
+- **Namespace**: `Automattic\WooCommerce\Internal\Traits`
+- **Purpose**: Reusable caching trait for all REST API controllers (autoloaded)
 - **Key features**:
   - ETag generation from response content
   - Cache checking via `rest_pre_dispatch` hook
@@ -26,17 +27,15 @@ This PR implements a **trait-based caching infrastructure** for WooCommerce REST
 #### 2. **MODIFIED**: `includes/rest-api/Controllers/Version3/class-wc-rest-controller.php`
 - **Net change**: -195 lines (moved to trait)
 - **Changes**:
-  - Added `use WC_REST_Cacheable;`
-  - Added trait file include
+  - Added `use Automattic\WooCommerce\Internal\Traits\RestApiCache;`
   - Calls `register_cache_hooks()` in constructor
   - Removed duplicate caching methods (now in trait)
 - **Impact**: All legacy v1/v2/v3 controllers can now opt into caching
 
 #### 3. **MODIFIED**: `src/Internal/RestApiControllerBase.php`
-- **Net change**: +5 lines
+- **Net change**: +2 lines
 - **Changes**:
-  - Added `use WC_REST_Cacheable;`
-  - Added trait file include
+  - Added `use Automattic\WooCommerce\Internal\Traits\RestApiCache;`
   - Calls `register_cache_hooks()` in `register()` method
 - **Impact**: All modern controllers in `src/Internal/` can now opt into caching
 
@@ -149,18 +148,17 @@ Same code works for:
 
 ```
 plugins/woocommerce/
-├── includes/rest-api/
+├── src/Internal/
 │   ├── Traits/
-│   │   └── trait-wc-rest-cacheable.php ⭐ NEW (+470 lines)
-│   └── Controllers/
-│       ├── Version3/
-│       │   └── class-wc-rest-controller.php ⭐ MODIFIED (-195 lines)
-│       └── examples/ ⭐ NEW
-│           ├── example-products-controller-with-caching.php
-│           ├── example-variations-controller-with-caching.php
-│           └── example-restapi-controllerbase-with-caching.php
-└── src/Internal/
-    └── RestApiControllerBase.php ⭐ MODIFIED (+5 lines)
+│   │   └── RestApiCache.php ⭐ NEW (~320 lines, autoloaded)
+│   └── RestApiControllerBase.php ⭐ MODIFIED (+2 lines)
+└── includes/rest-api/Controllers/
+    ├── Version3/
+    │   └── class-wc-rest-controller.php ⭐ MODIFIED (-195 lines)
+    └── examples/ ⭐ NEW
+        ├── example-products-controller-with-caching.php
+        ├── example-variations-controller-with-caching.php
+        └── example-restapi-controllerbase-with-caching.php
 
 docs/apis/rest-api/caching/ ⭐ NEW
 ├── RFC.md (Team review)

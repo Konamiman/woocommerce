@@ -3,6 +3,7 @@
 namespace Automattic\WooCommerce\Internal;
 
 use Automattic\WooCommerce\Internal\RegisterHooksInterface;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Utilities\StringUtil;
 use WP_HTTP_Response;
 use WP_REST_Request;
@@ -10,9 +11,6 @@ use WP_REST_Response;
 use WP_Error;
 use InvalidArgumentException;
 use Exception;
-
-// Load the cacheable trait.
-require_once WC_ABSPATH . 'includes/rest-api/Traits/trait-wc-rest-cacheable.php';
 
 /**
  * Base class for REST API controllers defined inside the 'src' directory.
@@ -77,7 +75,7 @@ require_once WC_ABSPATH . 'includes/rest-api/Traits/trait-wc-rest-cacheable.php'
  */
 abstract class RestApiControllerBase implements RegisterHooksInterface {
 
-	use WC_REST_Cacheable;
+	use RestApiCache;
 
 	/**
 	 * The root namespace for the JSON REST API endpoints.

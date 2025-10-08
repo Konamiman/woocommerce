@@ -305,7 +305,11 @@ public function invalidate_entity_cache( $entity_id ) {
 Controllers opt into caching by implementing two required methods:
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
+    
+    // Trait is already included via parent WC_REST_Controller
     
     // Enable caching
     protected $cache_enabled = true;
@@ -371,22 +375,23 @@ add_filter( 'woocommerce_rest_prepare_product_object', function( $response, $pro
 ### File Structure
 
 ```
-includes/rest-api/Traits/
-└── trait-wc-rest-cacheable.php (NEW - ~470 lines)
+src/Internal/Traits/
+└── RestApiCache.php (NEW - ~320 lines)
+    ├── Namespace: Automattic\WooCommerce\Internal\Traits
     ├── All caching logic
     ├── Hook registration
     ├── Pre/post dispatch handlers
     ├── Cache invalidation
-    └── Helper methods
+    └── Helper methods (autoloaded)
 
 includes/rest-api/Controllers/Version3/
 └── class-wc-rest-controller.php (MODIFIED)
-    ├── use WC_REST_Cacheable;
+    ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
     └── Call register_cache_hooks() in constructor
 
 src/Internal/
 └── RestApiControllerBase.php (MODIFIED)
-    ├── use WC_REST_Cacheable;
+    ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
     └── Call register_cache_hooks() in register()
 ```
 
@@ -415,7 +420,8 @@ PHP only supports single inheritance, so we can't create a shared base class. **
 Controllers customize behavior by overriding trait methods:
 
 ```php
-trait WC_REST_Cacheable {
+// Namespace: Automattic\WooCommerce\Internal\Traits
+trait RestApiCache {
     
     // Required - controllers must implement these
     protected function get_cache_key_info( $request ) {

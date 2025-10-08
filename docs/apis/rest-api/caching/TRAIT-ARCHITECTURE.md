@@ -47,13 +47,15 @@ class MyController {
 ## Architecture
 
 ```
-WC_REST_Cacheable Trait
+RestApiCache Trait
+├── Namespace: Automattic\WooCommerce\Internal\Traits
+├── Autoloaded by WooCommerce
 ├── All caching logic
 ├── Default implementations
 └── Overridable methods
 
 WC_REST_Controller                RestApiControllerBase
-├── use WC_REST_Cacheable         ├── use WC_REST_Cacheable
+├── use RestApiCache              ├── use RestApiCache
 ├── Existing methods              ├── Existing methods
 └── register_cache_hooks()        └── register_cache_hooks()
 ```
@@ -63,26 +65,29 @@ WC_REST_Controller                RestApiControllerBase
 ### File Structure
 
 ```
-/includes/rest-api/Traits/
-└── trait-wc-rest-cacheable.php  (New!)
+/src/Internal/Traits/
+└── RestApiCache.php  (New! - Autoloaded)
+    └── Namespace: Automattic\WooCommerce\Internal\Traits
 
 /includes/rest-api/Controllers/Version3/
 └── class-wc-rest-controller.php
-    ├── use WC_REST_Cacheable
+    ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
     └── Calls register_cache_hooks() in constructor
 
 /src/Internal/
 └── RestApiControllerBase.php
-    ├── use WC_REST_Cacheable
+    ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
     └── Calls register_cache_hooks() in register()
 ```
 
 ### WC_REST_Controller Integration
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 abstract class WC_REST_Controller extends WP_REST_Controller {
 
-	use WC_REST_Cacheable;
+	use RestApiCache;
 	
 	protected $namespace = 'wc/v1';
 	protected $rest_base = '';
@@ -98,9 +103,11 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 ### RestApiControllerBase Integration
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 abstract class RestApiControllerBase implements RegisterHooksInterface {
 
-	use WC_REST_Cacheable;
+	use RestApiCache;
 	
 	protected string $route_namespace = 'wc/v3';
 	
@@ -118,7 +125,11 @@ abstract class RestApiControllerBase implements RegisterHooksInterface {
 ### Example 1: Legacy Controller (WC_REST_Products_Controller)
 
 ```php
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
+    
+    // Trait already included via parent WC_REST_Controller
     
     protected $cache_enabled = true;  // From trait
     
@@ -154,8 +165,11 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 namespace Automattic\WooCommerce\Internal\MyFeature;
 
 use Automattic\WooCommerce\Internal\RestApiControllerBase;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 
 class MyEntityController extends RestApiControllerBase {
+    
+    // Trait already included via parent RestApiControllerBase
     
     protected $cache_enabled = true;  // From trait
     

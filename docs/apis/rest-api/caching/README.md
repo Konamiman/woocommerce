@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-This implementation adds **ETag-based caching** with **304 Not Modified** support to WooCommerce REST API endpoints.
+This implementation adds **ETag-based caching** with **304 Not Modified** support to WooCommerce REST API endpoints via the `RestApiCache` trait (autoloaded from `src/Internal/Traits`).
 
 ### 🎯 Goal
 Improve REST API performance by caching responses and avoiding unnecessary database queries.

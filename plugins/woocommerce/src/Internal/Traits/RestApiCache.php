@@ -4,25 +4,26 @@
  *
  * Provides caching functionality for REST API controllers.
  * Can be used by both WC_REST_Controller and RestApiControllerBase.
- *
- * @package WooCommerce\RestApi
- * @since   9.5.0
  */
 
-defined( 'ABSPATH' ) || exit;
+namespace Automattic\WooCommerce\Internal\Traits;
+
+use WP_REST_Request;
+use WP_REST_Response;
+use WP_REST_Server;
 
 /**
  * Trait for adding caching capabilities to REST API controllers.
  *
  * Usage:
- * 1. Add 'use WC_REST_Cacheable;' to your controller class
+ * 1. Add 'use RestApiCache;' to your controller class
  * 2. Set $cache_enabled = true
  * 3. Implement required methods (or use defaults)
- * 4. Call register_cache_hooks() in constructor
+ * 4. Call register_cache_hooks() in constructor or register() method
  *
- * @package WooCommerce\RestApi
+ * @since   9.5.0
  */
-trait WC_REST_Cacheable {
+trait RestApiCache {
 
 	/**
 	 * Whether REST API caching is enabled for this controller.
@@ -245,7 +246,7 @@ trait WC_REST_Cacheable {
 		if ( method_exists( $this, 'get_normalized_rest_base' ) ) {
 			return 'wc_rest_' . $this->get_normalized_rest_base() . '_collections_' . $entity_id;
 		}
-		
+
 		return 'wc_rest_entity_collections_' . $entity_id;
 	}
 
@@ -261,15 +262,15 @@ trait WC_REST_Cacheable {
 		// For classes with $namespace and $rest_base properties.
 		if ( isset( $this->namespace ) && isset( $this->rest_base ) ) {
 			$expected_route = '/' . $this->namespace . '/' . $this->rest_base;
-			
+
 			if ( method_exists( $this, 'get_normalized_rest_base' ) ) {
-				$normalized_base    = $this->get_normalized_rest_base();
+				$normalized_base     = $this->get_normalized_rest_base();
 				$expected_normalized = '/' . $this->namespace . '/' . $normalized_base;
-				
-				return strpos( $route, $expected_route ) === 0 
+
+				return strpos( $route, $expected_route ) === 0
 					|| strpos( $route, $expected_normalized ) === 0;
 			}
-			
+
 			return strpos( $route, $expected_route ) === 0;
 		}
 
