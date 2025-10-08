@@ -17,23 +17,29 @@ A generalized, extensible REST API caching system for WooCommerce that:
 ### Core Components
 
 ```
-WC_REST_Cacheable Trait
-├── All caching logic (~200 lines)
+RestApiCache Trait
+├── Namespace: Automattic\WooCommerce\Internal\Traits  
+├── All caching logic (~320 lines)
 ├── Hooks into rest_pre_dispatch (check cache)
 ├── Hooks into rest_post_dispatch (store cache)
-└── Overridable methods for entity-specific logic
+├── Overridable methods for entity-specific logic
+└── Autoloaded (no manual includes)
 
-WC_REST_Controller               RestApiControllerBase
-├── use WC_REST_Cacheable        ├── use WC_REST_Cacheable
-├── Calls register_cache_hooks() ├── Calls register_cache_hooks()
-└── (existing methods)           └── (existing methods)
+Controllers Opt In Individually
+├── WC_REST_Products_Controller
+│   ├── use RestApiCache
+│   ├── Constructor calls register_cache_hooks()
+│   ├── $cache_enabled = true
+│   └── Implements caching methods
+└── WC_REST_Product_Variations_Controller
+    ├── use RestApiCache
+    ├── Constructor calls register_cache_hooks()
+    ├── $cache_enabled = true
+    └── Implements caching methods
 
-Entity Controllers (e.g., WC_REST_Products_Controller)
-├── Set $cache_enabled = true
-├── Override get_cache_key_info()
-├── Override get_cache_hash_filters()
-├── Override remove_non_deterministic_fields() (optional)
-└── Call invalidate_entity_cache() on changes
+Other Controllers (No Overhead)
+└── WC_REST_Orders_Controller, etc.
+    └── No trait, no caching code, zero overhead ✅
 ```
 
 ### Key Innovation: Hook-Based Cache Invalidation
@@ -276,20 +282,31 @@ add_filter( 'woocommerce_rest_api_cache_hash', function( $hash_data, $request, $
 ## Files Modified
 
 ### Core Changes
-1. **`trait-wc-rest-cacheable.php`** (NEW)
-   - All caching logic (~200 lines)
-   - Reusable across both base classes
+1. **`src/Internal/Traits/RestApiCache.php`** (NEW)
+   - All caching logic (~320 lines)
+   - Namespaced and autoloaded
+   - Reusable by any controller
    - Fully documented with overridable methods
 
-2. **`class-wc-rest-controller.php`** (MODIFIED)
-   - Added `use WC_REST_Cacheable;`
-   - Calls `register_cache_hooks()` in constructor
-   - **Net change**: ~5 lines (trait does the heavy lifting)
+2. **`class-wc-rest-products-controller.php`** (MODIFIED)
+   - Added `use RestApiCache;`
+   - Added constructor calling `register_cache_hooks()`
+   - Implemented caching methods
+   - **Net change**: ~100 lines
 
-3. **`RestApiControllerBase.php`** (MODIFIED)
-   - Added `use WC_REST_Cacheable;`
-   - Calls `register_cache_hooks()` in `register()`
-   - **Net change**: ~5 lines
+3. **`class-wc-rest-product-variations-controller.php`** (MODIFIED)
+   - Added `use RestApiCache;`
+   - Added constructor calling `register_cache_hooks()`
+   - Implemented caching methods
+   - **Net change**: ~105 lines
+
+4. **`class-wc-rest-api-cache-invalidation.php`** (NEW)
+   - Hooks for automatic cache invalidation
+   - **Lines**: ~120
+
+5. **`class-woocommerce.php`** (MODIFIED)
+   - Loads cache invalidation hooks
+   - **Net change**: +3 lines
 
 ### Example Implementations (for reference)
 1. **`example-products-controller-with-caching.php`**

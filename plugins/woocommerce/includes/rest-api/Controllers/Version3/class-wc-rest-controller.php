@@ -20,8 +20,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Automattic\WooCommerce\Internal\Traits\RestApiCache;
-
 /**
  * Abstract Rest Controller Class
  *
@@ -30,8 +28,6 @@ use Automattic\WooCommerce\Internal\Traits\RestApiCache;
  * @version  2.6.0
  */
 abstract class WC_REST_Controller extends WP_REST_Controller {
-
-	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.
@@ -60,13 +56,6 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	 * @var null|WP_REST_Request
 	 */
 	private $_request = null;
-
-	/**
-	 * Constructor - register cache hooks.
-	 */
-	public function __construct() {
-		$this->register_cache_hooks();
-	}
 
 	/**
 	 * Add the schema from additional fields to an schema array.
@@ -683,8 +672,4 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 		// Ensure the array indexes are reset so it doesn't get converted to an object in JSON.
 		return array_values( $meta_data );
 	}
-
-	/* -------------------------------------------------------------------------
-	 * REST API Caching Methods - Provided by WC_REST_Cacheable trait
-	 * ------------------------------------------------------------------------- */
 }

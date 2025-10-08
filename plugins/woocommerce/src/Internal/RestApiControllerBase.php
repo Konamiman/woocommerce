@@ -3,7 +3,6 @@
 namespace Automattic\WooCommerce\Internal;
 
 use Automattic\WooCommerce\Internal\RegisterHooksInterface;
-use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Utilities\StringUtil;
 use WP_HTTP_Response;
 use WP_REST_Request;
@@ -75,8 +74,6 @@ use Exception;
  */
 abstract class RestApiControllerBase implements RegisterHooksInterface {
 
-	use RestApiCache;
-
 	/**
 	 * The root namespace for the JSON REST API endpoints.
 	 *
@@ -89,7 +86,6 @@ abstract class RestApiControllerBase implements RegisterHooksInterface {
 	 */
 	public function register() {
 		add_filter( 'woocommerce_rest_api_get_rest_namespaces', array( $this, 'handle_woocommerce_rest_api_get_rest_namespaces' ) );
-		$this->register_cache_hooks();
 	}
 
 	/**

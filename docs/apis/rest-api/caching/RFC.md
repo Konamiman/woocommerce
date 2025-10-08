@@ -81,12 +81,13 @@ rest_pre_dispatch hook
 
 ### Trait-Based Design
 
-We implement caching as a **trait** (`WC_REST_Cacheable`) that can be used by:
-- `WC_REST_Controller` (legacy v1/v2/v3 controllers)
-- `RestApiControllerBase` (modern src/Internal controllers)
-- Future v4 controllers
+We implement caching as a **trait** (`RestApiCache`) that controllers opt into individually:
+- Controllers explicitly `use` the trait
+- No overhead for controllers without caching
+- Works with any controller type (v1/v2/v3, RestApiControllerBase, v4)
+- Clean separation of concerns
 
-This avoids code duplication across different inheritance hierarchies.
+This avoids code duplication while keeping controllers that don't need caching completely unaffected.
 
 ### Key Components
 
@@ -302,14 +303,19 @@ public function invalidate_entity_cache( $entity_id ) {
 
 ### Controller Implementation
 
-Controllers opt into caching by implementing two required methods:
+Controllers opt into caching by using the trait and implementing two required methods:
 
 ```php
 use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
     
-    // Trait is already included via parent WC_REST_Controller
+    use RestApiCache;  // Opt into caching
+    
+    public function __construct() {
+        parent::__construct();
+        $this->register_cache_hooks();  // Register cache hooks
+    }
     
     // Enable caching
     protected $cache_enabled = true;
@@ -385,35 +391,41 @@ src/Internal/Traits/
     └── Helper methods (autoloaded)
 
 includes/rest-api/Controllers/Version3/
-└── class-wc-rest-controller.php (MODIFIED)
+├── class-wc-rest-products-controller.php (MODIFIED)
+│   ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+│   ├── $cache_enabled = true
+│   └── Calls register_cache_hooks() in constructor
+└── class-wc-rest-product-variations-controller.php (MODIFIED)
     ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
-    └── Call register_cache_hooks() in constructor
-
-src/Internal/
-└── RestApiControllerBase.php (MODIFIED)
-    ├── use Automattic\WooCommerce\Internal\Traits\RestApiCache;
-    └── Call register_cache_hooks() in register()
+    ├── $cache_enabled = true
+    └── Calls register_cache_hooks() in constructor
 ```
 
 ### Trait Approach Benefits
 
 **Why a trait?**
 
-WooCommerce has two separate controller hierarchies:
+1. **Zero overhead for non-cached controllers** - Only controllers that use the trait pay the cost
+2. **Explicit opt-in** - Clear which controllers have caching enabled
+3. **Works with any controller type** - v1/v2/v3, RestApiControllerBase, custom controllers, v4
+4. **No inheritance conflicts** - Traits compose regardless of class hierarchy
 
 ```php
-// Legacy controllers
-WC_REST_Products_Controller 
-    extends WC_REST_Products_V2_Controller
-        extends WC_REST_CRUD_Controller
-            extends WC_REST_Controller ✅ Uses trait
+// Controllers explicitly opt in
+class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
+    use RestApiCache;  // Opt in ✅
+    
+    public function __construct() {
+        parent::__construct();
+        $this->register_cache_hooks();
+    }
+}
 
-// Modern controllers
-OrderActionsRestController
-    extends RestApiControllerBase ✅ Uses trait
+// Controllers without caching have zero overhead
+class WC_REST_Orders_Controller extends WC_REST_Orders_V2_Controller {
+    // No trait, no caching code, no overhead ✅
+}
 ```
-
-PHP only supports single inheritance, so we can't create a shared base class. **Traits solve this perfectly** - same code works for both hierarchies!
 
 ### Overridable Methods
 

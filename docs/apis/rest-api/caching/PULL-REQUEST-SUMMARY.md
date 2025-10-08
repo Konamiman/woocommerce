@@ -24,20 +24,32 @@ This PR implements a **trait-based caching infrastructure** for WooCommerce REST
   - Reverse index for precise collection invalidation
   - All methods overridable for customization
 
-#### 2. **MODIFIED**: `includes/rest-api/Controllers/Version3/class-wc-rest-controller.php`
-- **Net change**: -195 lines (moved to trait)
+#### 2. **MODIFIED**: `includes/rest-api/Controllers/Version3/class-wc-rest-products-controller.php`
+- **Net change**: +100 lines
 - **Changes**:
   - Added `use Automattic\WooCommerce\Internal\Traits\RestApiCache;`
-  - Calls `register_cache_hooks()` in constructor
-  - Removed duplicate caching methods (now in trait)
-- **Impact**: All legacy v1/v2/v3 controllers can now opt into caching
+  - Added constructor calling `register_cache_hooks()`
+  - Set `$cache_enabled = true`
+  - Implemented caching methods
+- **Impact**: Products endpoints now have caching enabled
 
-#### 3. **MODIFIED**: `src/Internal/RestApiControllerBase.php`
-- **Net change**: +2 lines
+#### 3. **MODIFIED**: `includes/rest-api/Controllers/Version3/class-wc-rest-product-variations-controller.php`
+- **Net change**: +105 lines
 - **Changes**:
   - Added `use Automattic\WooCommerce\Internal\Traits\RestApiCache;`
-  - Calls `register_cache_hooks()` in `register()` method
-- **Impact**: All modern controllers in `src/Internal/` can now opt into caching
+  - Added constructor calling `register_cache_hooks()`
+  - Set `$cache_enabled = true`
+  - Implemented caching methods
+- **Impact**: Variations endpoints now have caching enabled
+
+#### 4. **NEW**: `includes/rest-api/class-wc-rest-api-cache-invalidation.php`
+- **Lines**: ~120
+- **Purpose**: Automatic cache invalidation hooks
+- **Hooks**: Product/variation update, create, delete, meta changes
+
+#### 5. **MODIFIED**: `includes/class-woocommerce.php`
+- **Net change**: +3 lines
+- **Changes**: Loads cache invalidation file in `load_rest_api()`
 
 ### Documentation (5 files in `docs/apis/rest-api/caching/`)
 
