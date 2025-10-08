@@ -355,7 +355,8 @@ trait RestApiCache {
 		}
 
 		// If this was a cache hit, skip.
-		if ( $response->get_header( 'X-WC-Cache' ) ) {
+		$headers = $response->get_headers();
+		if ( isset( $headers['X-WC-Cache'] ) ) {
 			return $response;
 		}
 
