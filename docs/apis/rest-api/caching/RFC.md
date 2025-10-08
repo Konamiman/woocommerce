@@ -186,7 +186,7 @@ trait WC_REST_Cacheable {
         ), $this->get_cache_ttl() );
         
         // Build reverse index for collection invalidation
-        if ( $cache_info['type'] === 'collection' ) {
+        if ( ! empty( $cache_info['is_collection'] ) ) {
             $entity_ids = $this->extract_entity_ids( $data );
             foreach ( $entity_ids as $entity_id ) {
                 $this->register_collection_cache_for_entity( $entity_id, $cache_info['key'] );
@@ -235,9 +235,9 @@ protected function generate_cache_hash( $request ) {
 protected function get_cache_key_info( $request ) {
     if ( preg_match( '#^/wc/v3/products/(\d+)$#', $route, $matches ) ) {
         return array(
-            'type' => 'single',
-            'key'  => 'wc_rest_product_' . $matches[1],
-            'id'   => (int) $matches[1],
+            'is_collection' => false,
+            'key'           => 'wc_rest_product_' . $matches[1],
+            'id'            => (int) $matches[1],
         );
     }
 }
@@ -252,8 +252,8 @@ protected function get_cache_key_info( $request ) {
     if ( strpos( $route, '/wc/v3/products' ) !== false ) {
         $query_hash = md5( wp_json_encode( $request->get_query_params() ) );
         return array(
-            'type' => 'collection',
-            'key'  => 'wc_rest_collection_' . md5( $route . $query_hash ),
+            'is_collection' => true,
+            'key'           => 'wc_rest_collection_' . md5( $route . $query_hash ),
         );
     }
 }

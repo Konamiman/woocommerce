@@ -112,9 +112,9 @@ class CustomEntityController extends RestApiControllerBase {
 		// Single entity: /wc/v3/custom-entities/{id}
 		if ( preg_match( '#^/wc/v3/custom-entities/(\d+)$#', $route, $matches ) ) {
 			return array(
-				'type' => 'single',
-				'key'  => 'wc_rest_custom_entity_' . $matches[1],
-				'id'   => (int) $matches[1],
+				'is_collection' => false,
+				'key'           => 'wc_rest_custom_entity_' . $matches[1],
+				'id'            => (int) $matches[1],
 			);
 		}
 
@@ -122,8 +122,8 @@ class CustomEntityController extends RestApiControllerBase {
 		if ( strpos( $route, '/wc/v3/custom-entities' ) !== false ) {
 			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
 			return array(
-				'type' => 'collection',
-				'key'  => 'wc_rest_custom_entities_collection_' . $query_hash,
+				'is_collection' => true,
+				'key'           => 'wc_rest_custom_entities_collection_' . $query_hash,
 			);
 		}
 

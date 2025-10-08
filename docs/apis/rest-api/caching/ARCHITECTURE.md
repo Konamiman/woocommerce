@@ -166,9 +166,9 @@ protected function get_cache_key_info( $request ) {
     // Single entity endpoint
     if ( preg_match( '#^/wc/v3/your-entities/(\d+)$#', $route, $matches ) ) {
         return array(
-            'type' => 'single',
-            'key'  => 'wc_rest_your_entity_' . $matches[1],
-            'id'   => (int) $matches[1],
+            'is_collection' => false,
+            'key'           => 'wc_rest_your_entity_' . $matches[1],
+            'id'            => (int) $matches[1],
         );
     }
     
@@ -176,8 +176,8 @@ protected function get_cache_key_info( $request ) {
     if ( strpos( $route, '/wc/v3/your-entities' ) !== false ) {
         $query_hash = md5( wp_json_encode( $request->get_query_params() ) );
         return array(
-            'type' => 'collection',
-            'key'  => 'wc_rest_your_entities_collection_' . $query_hash,
+            'is_collection' => true,
+            'key'           => 'wc_rest_your_entities_collection_' . $query_hash,
         );
     }
     

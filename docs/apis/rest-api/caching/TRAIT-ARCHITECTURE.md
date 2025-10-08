@@ -182,9 +182,9 @@ class MyEntityController extends RestApiControllerBase {
         
         if ( preg_match( '#^/wc/v3/my-entities/(\d+)$#', $route, $matches ) ) {
             return array(
-                'type' => 'single',
-                'key'  => 'wc_rest_my_entity_' . $matches[1],
-                'id'   => (int) $matches[1],
+                'is_collection' => false,
+                'key'           => 'wc_rest_my_entity_' . $matches[1],
+                'id'            => (int) $matches[1],
             );
         }
         

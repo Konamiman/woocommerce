@@ -59,7 +59,7 @@ trait WC_REST_Cacheable {
 	 * Return null to skip caching for this request.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return array|null Array with 'type' and 'key' or null to skip caching.
+	 * @return array|null Array with 'is_collection' (bool), 'key' (string), and optionally 'id' (int) or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
 		return null; // Default: no caching.
@@ -415,7 +415,7 @@ trait WC_REST_Cacheable {
 		set_transient( $cache_info['key'], $cache_data, $this->get_cache_ttl() );
 
 		// For collections, build reverse index.
-		if ( isset( $cache_info['type'] ) && 'collection' === $cache_info['type'] ) {
+		if ( ! empty( $cache_info['is_collection'] ) ) {
 			foreach ( $entity_ids as $entity_id ) {
 				$this->register_collection_cache_for_entity( $entity_id, $cache_info['key'] );
 			}
