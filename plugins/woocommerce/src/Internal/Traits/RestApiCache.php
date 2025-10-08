@@ -293,48 +293,47 @@ trait RestApiCache {
 		// Try to get cached response.
 		$cached = get_transient( $cache_info['key'] );
 
-		if ( $cached && isset( $cached['hash'], $cached['etag'], $cached['data'] ) ) {
-			// Calculate current hash to see if hooks have changed.
-			$current_hash = $this->generate_cache_hash( $request );
+		// No cache or invalid cache structure - continue to normal processing.
+		if ( ! $cached || ! isset( $cached['hash'], $cached['etag'], $cached['data'] ) ) {
+			$request->set_param( '_cache_info', $cache_info );
+			return $result;
+		}
 
-			if ( $cached['hash'] !== $current_hash ) {
-				// Hooks have changed - invalidate cache.
-				delete_transient( $cache_info['key'] );
-				return $result;
-			}
+		// Calculate current hash to see if hooks have changed.
+		$current_hash = $this->generate_cache_hash( $request );
 
-			// Cache is valid - check ETag.
-			$request_etag = $request->get_header( 'if_none_match' );
+		if ( $cached['hash'] !== $current_hash ) {
+			// Hooks have changed - invalidate cache.
+			delete_transient( $cache_info['key'] );
+			return $result;
+		}
 
-			if ( $request_etag === $cached['etag'] ) {
-				// Return 304 - no database queries!
-				return new WP_REST_Response(
-					null,
-					304,
-					array(
-						'ETag'          => $cached['etag'],
-						'X-WC-Cache'    => 'HIT-304',
-						'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
-					)
-				);
-			}
+		// Cache is valid - check ETag.
+		$request_etag = $request->get_header( 'if_none_match' );
 
-			// Cache valid but ETag doesn't match - return cached data.
+		if ( $request_etag === $cached['etag'] ) {
+			// Return 304 - no database queries!
 			return new WP_REST_Response(
-				$cached['data'],
-				200,
+				null,
+				304,
 				array(
 					'ETag'          => $cached['etag'],
-					'X-WC-Cache'    => 'HIT-200',
+					'X-WC-Cache'    => 'HIT-304',
 					'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
 				)
 			);
 		}
 
-		// No cache - store cache info for later use in post_dispatch.
-		$request->set_param( '_cache_info', $cache_info );
-
-		return $result;
+		// Cache valid but ETag doesn't match - return cached data.
+		return new WP_REST_Response(
+			$cached['data'],
+			200,
+			array(
+				'ETag'          => $cached['etag'],
+				'X-WC-Cache'    => 'HIT-200',
+				'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
+			)
+		);
 	}
 
 	/**
