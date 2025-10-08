@@ -896,6 +896,26 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Check if a route matches this controller's routes.
+	 *
+	 * Override in child classes for custom route matching logic.
+	 *
+	 * @param string $route Request route.
+	 * @return bool True if route matches this controller.
+	 */
+	protected function matches_route( $route ) {
+		// Build expected route pattern from namespace and rest_base.
+		$expected_route = '/' . $this->namespace . '/' . $this->rest_base;
+		
+		// Handle routes with regex patterns like products/(?P<product_id>[\d]+)/variations.
+		$normalized_base = $this->get_normalized_rest_base();
+		$expected_normalized = '/' . $this->namespace . '/' . $normalized_base;
+		
+		// Check if route starts with our expected pattern.
+		return strpos( $route, $expected_route ) === 0 || strpos( $route, $expected_normalized ) === 0;
+	}
+
+	/**
 	 * Check cache and return early if valid (pre-dispatch).
 	 *
 	 * @param mixed           $result  Response to replace the requested version with.
@@ -905,9 +925,14 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	 */
 	public function maybe_return_cached_response( $result, $server, $request ) {
 		// Only handle GET requests for this controller's endpoints.
-		if ( $result !== null
-			|| $request->get_method() !== 'GET'
-			|| strpos( $request->get_route(), $this->namespace ) === false ) {
+		if ( $result !== null || $request->get_method() !== 'GET' ) {
+			return $result;
+		}
+
+		// Check if this request matches this controller's routes.
+		// Use rest_base to be more specific than just namespace.
+		$route = $request->get_route();
+		if ( ! $this->matches_route( $route ) ) {
 			return $result;
 		}
 
@@ -965,9 +990,12 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	 */
 	public function maybe_cache_response( $response, $server, $request ) {
 		// Only handle GET requests that succeeded.
-		if ( $request->get_method() !== 'GET'
-			|| $response->get_status() !== 200
-			|| strpos( $request->get_route(), $this->namespace ) === false ) {
+		if ( $request->get_method() !== 'GET' || $response->get_status() !== 200 ) {
+			return $response;
+		}
+
+		// Check if this request matches this controller's routes.
+		if ( ! $this->matches_route( $request->get_route() ) ) {
 			return $response;
 		}
 
