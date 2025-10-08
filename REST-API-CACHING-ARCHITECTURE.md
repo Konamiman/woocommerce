@@ -43,6 +43,11 @@ protected function extract_entity_ids( $data ) {
     // Return array of entity IDs
 }
 
+// Optional: Check if response is a collection (default: isset($data[0]))
+protected function is_collection( $data ) {
+    // Return true if collection, false if single item
+}
+
 // Optional: Remove non-deterministic fields for ETag
 protected function remove_non_deterministic_fields( $data ) {
     // Return cleaned data (default: no cleaning)
@@ -192,25 +197,24 @@ protected function get_cache_hash_filters( $request ) {
 protected function extract_entity_ids( $data ) {
     $ids = array();
     
-    // Note: $data is always an array!
-    // - Collections are indexed arrays with numeric keys: [0 => [...], 1 => [...]]
-    // - Single items are associative arrays: ['id' => 123, 'name' => '...']
-    
-    // Collection - indexed array with numeric keys
-    if ( isset( $data[0] ) ) {
+    // Use the built-in is_collection() helper
+    if ( $this->is_collection( $data ) ) {
+        // Collection - extract ID from each item
         foreach ( $data as $item ) {
             if ( isset( $item['id'] ) ) {
                 $ids[] = $item['id'];
             }
         }
     } elseif ( isset( $data['id'] ) ) {
-        // Single entity - associative array
+        // Single entity
         $ids[] = $data['id'];
     }
     
     return array_unique( array_filter( $ids ) );
 }
 ```
+
+**Note**: The base class provides `is_collection()` which checks if `$data[0]` exists. You can override this method if you need custom collection detection logic.
 
 ### Step 5: (Optional) Implement remove_non_deterministic_fields()
 
@@ -219,8 +223,8 @@ protected function remove_non_deterministic_fields( $data ) {
     // Remove fields that change on each request
     // e.g., random recommendations, computed timestamps
     
-    // Collection - indexed array
-    if ( isset( $data[0] ) ) {
+    if ( $this->is_collection( $data ) ) {
+        // Collection - clean each item
         $clean_data = array();
         foreach ( $data as $key => $item ) {
             if ( isset( $item['random_recommendations'] ) ) {
@@ -234,7 +238,7 @@ protected function remove_non_deterministic_fields( $data ) {
         return $clean_data;
     }
     
-    // Single item - associative array
+    // Single item
     if ( isset( $data['random_recommendations'] ) ) {
         $clean_data = $data;
         unset( $clean_data['random_recommendations'] );

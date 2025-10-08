@@ -729,6 +729,20 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Check if response data is a collection.
+	 *
+	 * Override in child classes if you need custom collection detection logic.
+	 *
+	 * @param array $data Response data.
+	 * @return bool True if data represents a collection, false for single item.
+	 */
+	protected function is_collection( $data ) {
+		// Collections are indexed arrays with numeric keys starting at 0.
+		// Single items are associative arrays with string keys.
+		return isset( $data[0] );
+	}
+
+	/**
 	 * Extract entity IDs from response data.
 	 *
 	 * Override in child classes to extract IDs for cache invalidation tracking.
@@ -739,9 +753,7 @@ abstract class WC_REST_Controller extends WP_REST_Controller {
 	protected function extract_entity_ids( $data ) {
 		$ids = array();
 
-		// Check if this is a collection (indexed array) vs single item (associative array).
-		// Collections have numeric keys starting at 0.
-		if ( isset( $data[0] ) ) {
+		if ( $this->is_collection( $data ) ) {
 			// Collection - extract IDs from each item.
 			foreach ( $data as $item ) {
 				if ( isset( $item['id'] ) ) {

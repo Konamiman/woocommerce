@@ -127,15 +127,15 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
     protected function extract_entity_ids( $data ) {
         $product_ids = array();
         
-        // Collection - indexed array with numeric keys
-        if ( isset( $data[0] ) ) {
+        if ( $this->is_collection( $data ) ) {
+            // Collection
             foreach ( $data as $item ) {
                 if ( isset( $item['id'] ) ) {
                     $product_ids[] = $item['id'];
                 }
             }
         } elseif ( isset( $data['id'] ) ) {
-            // Single product - associative array
+            // Single product
             $product_ids[] = $data['id'];
         }
         
@@ -145,8 +145,8 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
     protected function remove_non_deterministic_fields( $data ) {
         // Remove related_ids (random sample)
         
-        // Collection - indexed array
-        if ( isset( $data[0] ) ) {
+        if ( $this->is_collection( $data ) ) {
+            // Collection
             $clean_data = array();
             foreach ( $data as $key => $product ) {
                 if ( isset( $product['related_ids'] ) ) {
@@ -160,7 +160,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
             return $clean_data;
         }
         
-        // Single product - associative array
+        // Single product
         if ( isset( $data['related_ids'] ) ) {
             $clean_data = $data;
             unset( $clean_data['related_ids'] );
