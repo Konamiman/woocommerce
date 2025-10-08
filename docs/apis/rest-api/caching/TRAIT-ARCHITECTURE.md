@@ -243,8 +243,8 @@ class MyEntityController extends RestApiControllerBase {
 | Method | Purpose | Note |
 |--------|---------|------|
 | `register_cache_hooks()` | Register WordPress hooks | Call in constructor/register() |
-| `maybe_return_cached_response()` | Pre-dispatch handler | Called by WordPress |
-| `maybe_cache_response()` | Post-dispatch handler | Called by WordPress |
+| `handle_rest_pre_dispatch()` | Pre-dispatch handler | Called by WordPress |
+| `handle_rest_post_dispatch()` | Post-dispatch handler | Called by WordPress |
 | `generate_cache_hash()` | Generate hook-based hash | Core caching logic |
 | `invalidate_entity_cache()` | Public API for invalidation | Call when entity changes |
 

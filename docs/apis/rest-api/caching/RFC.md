@@ -96,12 +96,12 @@ trait WC_REST_Cacheable {
     
     // Hook registration
     protected function register_cache_hooks() {
-        add_filter( 'rest_pre_dispatch', array( $this, 'maybe_return_cached_response' ), 10, 3 );
-        add_filter( 'rest_post_dispatch', array( $this, 'maybe_cache_response' ), 10, 3 );
+        add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
+        add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
     }
     
     // Pre-dispatch: Check cache and return early
-    public function maybe_return_cached_response( $result, $server, $request ) {
+    public function handle_rest_pre_dispatch( $result, $server, $request ) {
         // Only handle GET requests for this controller
         if ( $result !== null || $request->get_method() !== 'GET' ) {
             return $result;
@@ -151,7 +151,7 @@ trait WC_REST_Cacheable {
     }
     
     // Post-dispatch: Cache the response
-    public function maybe_cache_response( $response, $server, $request ) {
+    public function handle_rest_post_dispatch( $response, $server, $request ) {
         // Only cache successful GET requests
         if ( $request->get_method() !== 'GET' || $response->get_status() !== 200 ) {
             return $response;

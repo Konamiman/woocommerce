@@ -30,8 +30,8 @@ trait RestApiCache {
 	 * Call this from the controller's constructor or init method.
 	 */
 	protected function register_cache_hooks() {
-		add_filter( 'rest_pre_dispatch', array( $this, 'maybe_return_cached_response' ), 10, 3 );
-		add_filter( 'rest_post_dispatch', array( $this, 'maybe_cache_response' ), 10, 3 );
+		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
+		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
 	}
 
 	/**
@@ -264,14 +264,16 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Check cache and return early if valid (pre-dispatch).
+	 * Handle rest_pre_dispatch filter to check cache and return early if valid.
+	 *
+	 * @internal
 	 *
 	 * @param mixed           $result  Response to replace the requested version with.
 	 * @param WP_REST_Server  $server  Server instance.
 	 * @param WP_REST_Request $request Request used to generate the response.
 	 * @return mixed Response or original result.
 	 */
-	public function maybe_return_cached_response( $result, $server, $request ) {
+	public function handle_rest_pre_dispatch( $result, $server, $request ) {
 		// Only handle GET requests for this controller's endpoints.
 		if ( $result !== null || $request->get_method() !== 'GET' ) {
 			return $result;
@@ -336,14 +338,16 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Cache the response after all hooks have run (post-dispatch).
+	 * Handle rest_post_dispatch filter to cache the response after all hooks have run.
+	 *
+	 * @internal
 	 *
 	 * @param WP_REST_Response $response Result to send to the client.
 	 * @param WP_REST_Server   $server   Server instance.
 	 * @param WP_REST_Request  $request  Request used to generate the response.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function maybe_cache_response( $response, $server, $request ) {
+	public function handle_rest_post_dispatch( $response, $server, $request ) {
 		// Only handle GET requests that succeeded.
 		if ( $request->get_method() !== 'GET' || $response->get_status() !== 200 ) {
 			return $response;
