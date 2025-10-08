@@ -29,6 +29,13 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	use CogsAwareRestControllerTrait;
 
 	/**
+	 * Enable REST API caching for product endpoints.
+	 *
+	 * @var bool
+	 */
+	protected $cache_enabled = true;
+
+	/**
 	 * Endpoint namespace.
 	 *
 	 * @var string
@@ -2148,5 +2155,100 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		$this->processed_attachment_ids_for_request = array();
 
 		return $response;
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Get cache key information for the request.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array|null Cache key info or null to skip caching.
+	 */
+	protected function get_cache_key_info( $request ) {
+		$route = $request->get_route();
+
+		// Single product: /wc/v3/products/{id}
+		if ( preg_match( '#^/wc/v3/products/(\d+)$#', $route, $matches ) ) {
+			return array(
+				'is_collection' => false,
+				'key'           => 'wc_rest_product_' . $matches[1],
+				'id'            => (int) $matches[1],
+			);
+		}
+
+		// Duplicate endpoint: /wc/v3/products/{id}/duplicate (skip caching - creates new product)
+		if ( strpos( $route, '/duplicate' ) !== false ) {
+			return null;
+		}
+
+		// Collection endpoints: /wc/v3/products, /wc/v3/products/suggested-products
+		if ( strpos( $route, '/wc/v3/products' ) !== false ) {
+			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+			return array(
+				'is_collection' => true,
+				'key'           => 'wc_rest_products_collection_' . md5( $route . $query_hash ),
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get filter names to include in cache hash.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array Filter names.
+	 */
+	protected function get_cache_hash_filters( $request ) {
+		return array(
+			'woocommerce_rest_prepare_product_object',
+			'rest_prepare_product',
+			'woocommerce_rest_product_object_query',
+		);
+	}
+
+	/**
+	 * Remove non-deterministic fields from data for ETag generation.
+	 *
+	 * @param array $data Response data.
+	 * @return array Cleaned data.
+	 */
+	protected function remove_non_deterministic_fields( $data ) {
+		if ( $this->is_collection( $data ) ) {
+			// Collection response - remove related_ids from each product.
+			$clean_data = array();
+			foreach ( $data as $key => $product ) {
+				if ( isset( $product['related_ids'] ) ) {
+					$clean_product = $product;
+					unset( $clean_product['related_ids'] );
+					$clean_data[ $key ] = $clean_product;
+				} else {
+					$clean_data[ $key ] = $product;
+				}
+			}
+			return $clean_data;
+		}
+
+		// Single product response - remove related_ids.
+		if ( isset( $data['related_ids'] ) ) {
+			$clean_data = $data;
+			unset( $clean_data['related_ids'] );
+			return $clean_data;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Get cache key for a single product.
+	 *
+	 * @param int $entity_id Product ID.
+	 * @return string Cache key.
+	 */
+	protected function get_single_entity_cache_key( $entity_id ) {
+		return 'wc_rest_product_' . $entity_id;
 	}
 }

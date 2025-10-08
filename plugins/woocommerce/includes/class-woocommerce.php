@@ -583,6 +583,9 @@ final class WooCommerce {
 	 */
 	public function load_rest_api() {
 		\Automattic\WooCommerce\RestApi\Server::instance()->init();
+		
+		// Load REST API cache invalidation hooks.
+		include_once WC_ABSPATH . 'includes/rest-api/class-wc-rest-api-cache-invalidation.php';
 	}
 
 	/**
