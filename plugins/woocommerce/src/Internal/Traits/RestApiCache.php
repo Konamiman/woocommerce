@@ -360,10 +360,11 @@ trait RestApiCache {
 			return $response;
 		}
 
-		// If this was a cache hit, skip.
+		// If this was a cache hit from pre-dispatch, all headers are already set.
+		// Pre-dispatch sets: ETag, Cache-Control, Date, X-WC-Cache
 		$headers = $response->get_headers();
 		if ( isset( $headers['X-WC-Cache'] ) ) {
-			return $response;
+			return $response; // Headers already complete, nothing to do.
 		}
 
 		// Get cache info.
