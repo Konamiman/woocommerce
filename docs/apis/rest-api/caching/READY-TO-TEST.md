@@ -93,7 +93,7 @@ curl -i http://your-site.local/wp-json/wc/v3/products/123 \
   --user consumer_key:consumer_secret
 
 # Should show:
-# ✅ X-WC-Cache: HIT-200
+# ✅ X-WC-Cache: HIT
 ```
 
 ## What You'll See
@@ -114,7 +114,7 @@ Content-Length: 2534
 HTTP/1.1 200 OK
 ETag: "a1b2c3d4e5f6..."
 Cache-Control: private, must-revalidate, max-age=300
-X-WC-Cache: HIT-200
+X-WC-Cache: HIT
 Content-Length: 2534
 
 {same product data from cache - 0 DB queries!}
@@ -125,7 +125,7 @@ Content-Length: 2534
 HTTP/1.1 304 Not Modified
 ETag: "a1b2c3d4e5f6..."
 Cache-Control: private, must-revalidate, max-age=300
-X-WC-Cache: HIT-304
+X-WC-Cache: HIT
 
 (no body - bandwidth saved!)
 ```
@@ -159,7 +159,7 @@ curl http://site.local/wp-json/wc/v3/products/123 --user key:secret
 
 # 2. Verify cache
 curl http://site.local/wp-json/wc/v3/products/123 --user key:secret
-# X-WC-Cache: HIT-200
+# X-WC-Cache: HIT
 
 # 3. Update product
 curl -X PUT http://site.local/wp-json/wc/v3/products/123 \

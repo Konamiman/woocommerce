@@ -443,7 +443,7 @@ Cache-Control: private, must-revalidate, max-age=300
 
 ### Cache Headers for Debugging
 ```http
-X-WC-Cache: HIT-304 | HIT-200 | MISS
+X-WC-Cache: HIT | MISS
 ```
 
 ### Metrics to Track

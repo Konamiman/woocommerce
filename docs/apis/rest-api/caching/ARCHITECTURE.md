@@ -368,7 +368,7 @@ All cached responses include:
 ```http
 ETag: "a1b2c3d4e5f6..."
 Cache-Control: private, must-revalidate, max-age=300
-X-WC-Cache: HIT-304 | HIT-200 | MISS
+X-WC-Cache: HIT | MISS
 ```
 
 ## Best Practices
@@ -410,8 +410,9 @@ curl -I https://example.com/wp-json/wc/v3/products/123
 
 HTTP/1.1 200 OK
 ETag: "abc123..."
-X-WC-Cache: HIT-200
+X-WC-Cache: HIT
 Cache-Control: private, must-revalidate, max-age=300
+Date: Wed, 08 Oct 2025 11:55:00 GMT
 ```
 
 ### Test 304 Response
@@ -427,7 +428,8 @@ curl -I https://example.com/wp-json/wc/v3/products/123 \
 
 HTTP/1.1 304 Not Modified
 ETag: "abc123..."
-X-WC-Cache: HIT-304
+X-WC-Cache: HIT
+Date: Wed, 08 Oct 2025 11:55:00 GMT
 ```
 
 ## Troubleshooting

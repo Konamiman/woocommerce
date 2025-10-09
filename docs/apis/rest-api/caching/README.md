@@ -256,7 +256,7 @@ curl -v https://example.com/wp-json/wc/v3/products/123 \
 
 # Should return:
 # HTTP/1.1 304 Not Modified
-# X-WC-Cache: HIT-304
+# X-WC-Cache: HIT
 ```
 
 ### Unit Tests Needed

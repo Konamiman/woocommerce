@@ -330,12 +330,12 @@ trait RestApiCache {
 
 		if ( $request_etag === $cached['etag'] ) {
 			// Return 304 - no database queries!
-			$cache_headers['X-WC-Cache'] = 'HIT-304';
+			$cache_headers['X-WC-Cache'] = 'HIT';
 			return new WP_REST_Response( null, 304, $cache_headers );
 		}
 
 		// Cache valid but ETag doesn't match - return cached data with full headers.
-		$cache_headers['X-WC-Cache'] = 'HIT-200';
+		$cache_headers['X-WC-Cache'] = 'HIT';
 		return new WP_REST_Response( $cached['data'], 200, $cache_headers );
 	}
 

@@ -27,6 +27,7 @@ curl -i http://your-site.local/wp-json/wc/v3/products/123 \
 # Look for these headers:
 # ETag: "abc123..."
 # Cache-Control: private, must-revalidate, max-age=300
+# Date: Wed, 08 Oct 2025 12:00:00 GMT
 # X-WC-Cache: MISS
 ```
 
@@ -47,7 +48,7 @@ curl -i http://your-site.local/wp-json/wc/v3/products/123 \
 
 # Should return:
 # HTTP/1.1 304 Not Modified
-# X-WC-Cache: HIT-304
+# X-WC-Cache: HIT
 # (No response body)
 ```
 
@@ -64,7 +65,7 @@ curl -i http://your-site.local/wp-json/wc/v3/products/123 \
 
 # Should return:
 # HTTP/1.1 200 OK
-# X-WC-Cache: HIT-200
+# X-WC-Cache: HIT
 # (Full response body from cache)
 ```
 
@@ -106,7 +107,7 @@ curl -i "http://your-site.local/wp-json/wc/v3/products?per_page=10" \
   --user consumer_key:consumer_secret
 
 # Should return:
-# X-WC-Cache: HIT-200
+# X-WC-Cache: HIT
 ```
 
 ### Test 6: Collection Invalidation (Precise)
@@ -136,7 +137,7 @@ curl -i "http://your-site.local/wp-json/wc/v3/products?include=1,2,3" \
 # Request second collection again
 curl -i "http://your-site.local/wp-json/wc/v3/products?include=4,5,6" \
   --user consumer_key:consumer_secret
-# X-WC-Cache: HIT-200 (NOT invalidated - product 2 not in this collection) ✅
+# X-WC-Cache: HIT (NOT invalidated - product 2 not in this collection) ✅
 ```
 
 ## Testing with WP-CLI
@@ -319,14 +320,14 @@ Every GET request should include:
 ```http
 ETag: "..."
 Cache-Control: private, must-revalidate, max-age=300
-X-WC-Cache: MISS | HIT-200 | HIT-304
+X-WC-Cache: MISS | HIT
 ```
 
 ### Cache Hit Rate
 
 After running for a few minutes with typical usage:
 - **First requests**: X-WC-Cache: MISS
-- **Subsequent requests**: X-WC-Cache: HIT-200 or HIT-304
+- **Subsequent requests**: X-WC-Cache: HIT
 - **Expected hit rate**: 60-80%
 
 ### Performance Improvement
@@ -419,8 +420,8 @@ ab -n 100 -c 10 -H "Authorization: Basic $(echo -n 'key:secret' | base64)" \
 - [ ] GET request returns Cache-Control header
 - [ ] GET request returns X-WC-Cache header
 - [ ] X-WC-Cache: MISS on first request
-- [ ] X-WC-Cache: HIT-200 on second request (different ETag)
-- [ ] X-WC-Cache: HIT-304 with If-None-Match (same ETag)
+- [ ] X-WC-Cache: HIT on second request (different ETag)
+- [ ] X-WC-Cache: HIT with If-None-Match (same ETag)
 - [ ] 304 response has no body
 - [ ] Product update invalidates cache
 - [ ] Variation update invalidates variation AND product cache

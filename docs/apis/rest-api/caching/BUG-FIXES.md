@@ -93,7 +93,7 @@ curl -i http://your-site.local/wp-json/wc/v3/products/123 \
   --user consumer_key:consumer_secret
 
 # Should return:
-# ✅ X-WC-Cache: HIT-200
+# ✅ X-WC-Cache: HIT
 ```
 
 ---
