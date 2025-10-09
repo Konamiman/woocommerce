@@ -295,7 +295,6 @@ trait RestApiCache {
 		$cache_headers = array(
 			'ETag'          => $cached['etag'],
 			'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
-			'Date'          => gmdate( 'D, d M Y H:i:s', $cached['created_at'] ) . ' GMT',
 		);
 
 		if ( $request_etag === $cached['etag'] ) {
@@ -359,7 +358,6 @@ trait RestApiCache {
 		// Set cache headers.
 		$response->header( 'ETag', $etag );
 		$response->header( 'Cache-Control', 'private, must-revalidate, max-age=' . $this->get_cache_ttl() );
-		$response->header( 'Date', gmdate( 'D, d M Y H:i:s' ) . ' GMT' );
 		$response->header( 'X-WC-Cache', 'MISS' );
 
 		// Prepare cached data.
