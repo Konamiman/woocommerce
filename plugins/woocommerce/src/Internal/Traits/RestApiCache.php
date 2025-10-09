@@ -32,6 +32,7 @@ trait RestApiCache {
 	protected function register_cache_hooks() {
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
+		add_filter( 'rest_pre_serve_request', array( $this, 'handle_rest_pre_serve_request' ), 10, 4 );
 	}
 
 	/**
