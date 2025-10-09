@@ -32,7 +32,6 @@ trait RestApiCache {
 	protected function register_cache_hooks() {
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
-		add_action( 'rest_pre_serve_request', array( $this, 'handle_rest_pre_serve_request' ), PHP_INT_MAX, 4 );
 	}
 
 	/**
@@ -309,33 +308,6 @@ trait RestApiCache {
 		// Cache valid but ETag doesn't match - return cached data with full headers.
 		$cache_headers['X-WC-Cache'] = 'HIT';
 		return new WP_REST_Response( $cached['data'], 200, $cache_headers );
-	}
-
-	/**
-	 * Handle rest_pre_serve_request filter to ensure correct Date header for cached responses.
-	 *
-	 * @internal
-	 *
-	 * @param bool             $served  Whether the request has already been served.
-	 * @param WP_HTTP_Response $result  Result to send to the client.
-	 * @param WP_REST_Request  $request Request used to generate the response.
-	 * @param WP_REST_Server   $server  Server instance.
-	 * @return bool Whether the request has been served.
-	 */
-	public function handle_rest_pre_serve_request( $served, $result, $request, $server ) {
-		// Only handle responses with our Date header (cached responses).
-		if ( ! $result instanceof WP_REST_Response ) {
-			return $served;
-		}
-
-		$headers = $result->get_headers();
-		if ( isset( $headers['Date'] ) && isset( $headers['X-WC-Cache'] ) && 'HIT' === $headers['X-WC-Cache'] ) {
-			// Send our Date header, replacing any previously sent Date headers.
-			// The 'true' parameter replaces previous headers with the same name.
-			header( 'Date: ' . $headers['Date'], true );
-		}
-
-		return $served;
 	}
 
 	/**
