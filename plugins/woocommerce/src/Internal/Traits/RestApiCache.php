@@ -253,6 +253,11 @@ trait RestApiCache {
 			return $result;
 		}
 
+		// If another controller already handled caching, skip.
+		if ( $request->get_param( '_cache_info' ) ) {
+			return $result;
+		}
+
 		// Get cache key info - returns null if route doesn't match this controller.
 		$cache_info = $this->get_cache_key_info( $request );
 		if ( ! $cache_info ) {
@@ -404,6 +409,9 @@ trait RestApiCache {
 				$this->register_collection_cache_for_entity( $entity_id, $cache_info['key'] );
 			}
 		}
+
+		// Remove cache info so other controllers know this request was handled.
+		$request->set_param( '_cache_info', null );
 
 		return $response;
 	}
