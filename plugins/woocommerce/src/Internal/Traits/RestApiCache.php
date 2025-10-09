@@ -285,6 +285,12 @@ trait RestApiCache {
 			return $result;
 		}
 
+		// Check for cache skip parameter.
+		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
+			$request->set_param( '_cache_skipped', true );
+			return $result;
+		}
+
 		$cache_info = $this->get_cache_key_info( $request );
 		if ( ! $cache_info ) {
 			return $result;
@@ -365,6 +371,12 @@ trait RestApiCache {
 		$headers = $response->get_headers();
 		if ( isset( $headers['X-WC-Cache'] ) ) {
 			return $response; // Headers already complete, nothing to do.
+		}
+
+		// If cache was skipped via _skip_cache parameter, add header but don't cache.
+		if ( $request->get_param( '_cache_skipped' ) ) {
+			$response->header( 'X-WC-Cache', 'SKIP' );
+			return $response;
 		}
 
 		// Get cache info.
