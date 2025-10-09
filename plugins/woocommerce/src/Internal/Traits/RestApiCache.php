@@ -312,6 +312,33 @@ trait RestApiCache {
 	}
 
 	/**
+	 * Handle rest_pre_serve_request filter to ensure correct Date header for cached responses.
+	 *
+	 * @internal
+	 *
+	 * @param bool             $served  Whether the request has already been served.
+	 * @param WP_HTTP_Response $result  Result to send to the client.
+	 * @param WP_REST_Request  $request Request used to generate the response.
+	 * @param WP_REST_Server   $server  Server instance.
+	 * @return bool Whether the request has been served.
+	 */
+	public function handle_rest_pre_serve_request( $served, $result, $request, $server ) {
+		// Only handle responses with our Date header (cached responses).
+		if ( ! $result instanceof WP_REST_Response ) {
+			return $served;
+		}
+
+		$headers = $result->get_headers();
+		if ( isset( $headers['Date'] ) && isset( $headers['X-WC-Cache'] ) && 'HIT' === $headers['X-WC-Cache'] ) {
+			// Our Date header is set - prevent WordPress from overwriting it.
+			// We do this by ensuring the header is already sent.
+			header( 'Date: ' . $headers['Date'], true );
+		}
+
+		return $served;
+	}
+
+	/**
 	 * Handle rest_post_dispatch filter to cache the response after all hooks have run.
 	 *
 	 * @internal
