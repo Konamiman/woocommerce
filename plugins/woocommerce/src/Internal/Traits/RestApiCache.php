@@ -258,15 +258,14 @@ trait RestApiCache {
 			return $result;
 		}
 
-		// Mark that we're handling caching for this request (for post-dispatch).
-		$request->set_param( '_rest_cache_active', true );
+		// Store cache info for post-dispatch to reuse (avoid calling get_cache_key_info twice).
+		$request->set_param( '_cache_info', $cache_info );
 
 		// Try to get cached response.
 		$cached = get_transient( $cache_info['key'] );
 
 		// No cache or invalid cache structure - continue to normal processing.
 		if ( ! $cached || ! isset( $cached['hash'], $cached['etag'], $cached['data'], $cached['created_at'] ) ) {
-			$request->set_param( '_cache_info', $cache_info );
 			return $result;
 		}
 
@@ -332,8 +331,10 @@ trait RestApiCache {
 			return $response;
 		}
 
-		// Only process if pre-dispatch marked this request for caching.
-		if ( ! $request->get_param( '_rest_cache_active' ) ) {
+		// Get cache info from pre-dispatch (already computed there).
+		$cache_info = $request->get_param( '_cache_info' );
+		if ( ! $cache_info ) {
+			// Pre-dispatch didn't set cache info, so this request doesn't use caching.
 			return $response;
 		}
 
@@ -342,16 +343,6 @@ trait RestApiCache {
 		$headers = $response->get_headers();
 		if ( isset( $headers['X-WC-Cache'] ) ) {
 			return $response; // Headers already complete, nothing to do.
-		}
-
-		// Get cache info.
-		$cache_info = $request->get_param( '_cache_info' );
-		if ( ! $cache_info ) {
-			$cache_info = $this->get_cache_key_info( $request );
-		}
-
-		if ( ! $cache_info ) {
-			return $response;
 		}
 
 		$data = $response->get_data();
