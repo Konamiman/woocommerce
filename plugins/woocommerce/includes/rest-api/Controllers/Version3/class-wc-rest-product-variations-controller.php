@@ -1342,13 +1342,17 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 			return null;
 		}
 
+		// Generate hash from query params for cache key differentiation.
+		$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+
 		switch ( $matched_route ) {
 			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
 				// Single variation endpoint.
 				$variation_id = $request->get_param( 'id' );
 				return array(
 					'is_collection' => false,
-					'key'           => 'wc_rest_variation_' . $variation_id,
+					'key'           => 'wc_rest_variation_' . $variation_id . '_' . $query_hash,
+					'entity_id'     => $variation_id,
 				);
 
 			case '/wc/v3/' . $this->rest_base . '/generate':
@@ -1358,7 +1362,6 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 			case '/wc/v3/' . $this->rest_base:
 				// Variations collection endpoint.
 				$product_id = $request->get_param( 'product_id' );
-				$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
 				return array(
 					'is_collection' => true,
 					'key'           => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
@@ -1420,15 +1423,5 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 		}
 
 		return array_unique( array_filter( $ids ) );
-	}
-
-	/**
-	 * Get cache key for a single variation.
-	 *
-	 * @param int $entity_id Variation ID.
-	 * @return string Cache key.
-	 */
-	protected function get_single_entity_cache_key( $entity_id ) {
-		return 'wc_rest_variation_' . $entity_id;
 	}
 }

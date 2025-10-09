@@ -2251,14 +2251,4 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 
 		return $data;
 	}
-
-	/**
-	 * Get cache key for a single product.
-	 *
-	 * @param int $entity_id Product ID.
-	 * @return string Cache key.
-	 */
-	protected function get_single_entity_cache_key( $entity_id ) {
-		return 'wc_rest_product_' . $entity_id;
-	}
 }

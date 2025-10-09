@@ -447,11 +447,15 @@ trait RestApiCache {
 		// Cache the response.
 		set_transient( $cache_info['key'], $cache_data, $this->get_cache_ttl() );
 
-		// For collections, build reverse index.
+		// Build reverse index for cache invalidation.
 		if ( ! empty( $cache_info['is_collection'] ) ) {
+			// For collections, track all entity IDs in the response.
 			foreach ( $entity_ids as $entity_id ) {
 				$this->register_collection_cache_for_entity( $entity_id, $cache_info['key'] );
 			}
+		} elseif ( isset( $cache_info['entity_id'] ) ) {
+			// For single entities, also use reverse index to handle query param variations.
+			$this->register_collection_cache_for_entity( $cache_info['entity_id'], $cache_info['key'] );
 		}
 
 		// Remove cache info and controller class so other controllers know this request was handled.
@@ -465,19 +469,15 @@ trait RestApiCache {
 	 * Invalidate cache for an entity.
 	 *
 	 * Call this method when an entity changes to clear its caches.
+	 * This will delete all cache entries related to the entity (single entity with various query params + collections).
 	 *
 	 * @param int $entity_id Entity ID.
 	 */
 	public function invalidate_entity_cache( $entity_id ) {
-		// Delete single entity cache.
-		$cache_key = $this->get_single_entity_cache_key( $entity_id );
-		if ( $cache_key ) {
-			delete_transient( $cache_key );
-		}
-
-		// Delete collection caches that include this entity.
-		$collection_cache_keys = $this->get_collection_caches_for_entity( $entity_id );
-		foreach ( $collection_cache_keys as $cache_key ) {
+		// Get all cache keys for this entity (includes single entity with various query params + collections).
+		$cache_keys = $this->get_collection_caches_for_entity( $entity_id );
+		
+		foreach ( $cache_keys as $cache_key ) {
 			delete_transient( $cache_key );
 		}
 
@@ -491,17 +491,5 @@ trait RestApiCache {
 		 * @param object $controller Controller instance.
 		 */
 		do_action( 'woocommerce_rest_api_cache_invalidated', $entity_id, $this );
-	}
-
-	/**
-	 * Get cache key for a single entity.
-	 *
-	 * Override in classes to provide entity-specific cache keys.
-	 *
-	 * @param int $entity_id Entity ID.
-	 * @return string|null Cache key or null.
-	 */
-	protected function get_single_entity_cache_key( $entity_id ) {
-		return null;
 	}
 }
