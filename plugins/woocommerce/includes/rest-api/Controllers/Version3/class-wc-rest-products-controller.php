@@ -2177,13 +2177,17 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 			return null;
 		}
 
+		// Generate hash from query params for cache key differentiation.
+		$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+
 		switch ( $matched_route ) {
 			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
 				// Single product endpoint.
 				$product_id = $request->get_param( 'id' );
 				return array(
 					'is_collection' => false,
-					'key'           => 'wc_rest_product_' . $product_id,
+					'key'           => 'wc_rest_product_' . $product_id . '_' . $query_hash,
+					'entity_id'     => $product_id,
 				);
 
 			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)/duplicate':
@@ -2193,7 +2197,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 			case '/wc/v3/' . $this->rest_base:
 			case '/wc/v3/' . $this->rest_base . '/suggested-products':
 				// Collection endpoints.
-				$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
 				return array(
 					'is_collection' => true,
 					'key'           => 'wc_rest_products_collection_' . md5( $matched_route . $query_hash ),
