@@ -290,6 +290,9 @@ trait RestApiCache {
 			return $result;
 		}
 
+		// Store that this route matches for post-dispatch optimization.
+		$request->set_param( '_route_matches', true );
+
 		$cache_info = $this->get_cache_key_info( $request );
 		if ( ! $cache_info ) {
 			return $result;
@@ -366,8 +369,8 @@ trait RestApiCache {
 			return $response;
 		}
 
-		// Check if this request matches this controller's routes.
-		if ( ! $this->matches_route( $request->get_route() ) ) {
+		// Check if route matched in pre-dispatch (optimization to avoid calling matches_route twice).
+		if ( ! $request->get_param( '_route_matches' ) ) {
 			return $response;
 		}
 
