@@ -294,7 +294,17 @@ trait RestApiCache {
 		$cached = get_transient( $cache_info['key'] );
 
 		// No cache or invalid cache structure - continue to normal processing.
-		if ( ! $cached || ! isset( $cached['hash'], $cached['etag'], $cached['data'] ) ) {
+		if ( ! $cached || ! isset( $cached['hash'], $cached['etag'], $cached['data'], $cached['created_at'] ) ) {
+			$request->set_param( '_cache_info', $cache_info );
+			return $result;
+		}
+
+		// Check if cache has expired based on creation time.
+		$current_time   = time();
+		$expiration_time = $cached['created_at'] + $this->get_cache_ttl();
+		if ( $current_time >= $expiration_time ) {
+			// Cache expired - delete and continue to normal processing.
+			delete_transient( $cache_info['key'] );
 			$request->set_param( '_cache_info', $cache_info );
 			return $result;
 		}
@@ -395,6 +405,7 @@ trait RestApiCache {
 			'etag'       => $etag,
 			'data'       => $data,
 			'entity_ids' => $entity_ids,
+			'created_at' => time(), // UTC timestamp for explicit expiration checking.
 		);
 
 		// Cache the response.
