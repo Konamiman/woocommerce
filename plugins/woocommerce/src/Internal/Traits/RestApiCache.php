@@ -232,38 +232,6 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Check if a route matches this controller's routes.
-	 *
-	 * Override in classes for custom route matching logic.
-	 *
-	 * @param string $route Request route.
-	 * @return bool True if route matches this controller.
-	 */
-	protected function matches_route( $route ) {
-		// For classes with $namespace and $rest_base properties.
-		if ( isset( $this->namespace ) && isset( $this->rest_base ) ) {
-			$expected_route = '/' . $this->namespace . '/' . $this->rest_base;
-
-			if ( method_exists( $this, 'get_normalized_rest_base' ) ) {
-				$normalized_base     = $this->get_normalized_rest_base();
-				$expected_normalized = '/' . $this->namespace . '/' . $normalized_base;
-
-				return strpos( $route, $expected_route ) === 0
-					|| strpos( $route, $expected_normalized ) === 0;
-			}
-
-			return strpos( $route, $expected_route ) === 0;
-		}
-
-		// For classes with $route_namespace property (RestApiControllerBase).
-		if ( isset( $this->route_namespace ) ) {
-			return strpos( $route, '/' . $this->route_namespace . '/' ) !== false;
-		}
-
-		return false;
-	}
-
-	/**
 	 * Handle rest_pre_dispatch filter to check cache and return early if valid.
 	 *
 	 * @internal
@@ -284,19 +252,14 @@ trait RestApiCache {
 			return $result;
 		}
 
-		// Check if this request matches this controller's routes.
-		$route = $request->get_route();
-		if ( ! $this->matches_route( $route ) ) {
-			return $result;
-		}
-
-		// Store that this route matches for post-dispatch optimization.
-		$request->set_param( '_route_matches', true );
-
+		// Get cache key info - returns null if route doesn't match this controller.
 		$cache_info = $this->get_cache_key_info( $request );
 		if ( ! $cache_info ) {
 			return $result;
 		}
+
+		// Mark that we're handling caching for this request (for post-dispatch).
+		$request->set_param( '_rest_cache_active', true );
 
 		// Try to get cached response.
 		$cached = get_transient( $cache_info['key'] );
@@ -369,8 +332,8 @@ trait RestApiCache {
 			return $response;
 		}
 
-		// Check if route matched in pre-dispatch (optimization to avoid calling matches_route twice).
-		if ( ! $request->get_param( '_route_matches' ) ) {
+		// Only process if pre-dispatch marked this request for caching.
+		if ( ! $request->get_param( '_rest_cache_active' ) ) {
 			return $response;
 		}
 
