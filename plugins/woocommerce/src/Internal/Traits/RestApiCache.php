@@ -321,29 +321,22 @@ trait RestApiCache {
 		// Cache is valid - check ETag.
 		$request_etag = $request->get_header( 'if_none_match' );
 
+		// Prepare cache headers (used for both 304 and 200 responses).
+		$cache_headers = array(
+			'ETag'          => $cached['etag'],
+			'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
+			'Date'          => gmdate( 'D, d M Y H:i:s', $cached['created_at'] ) . ' GMT',
+		);
+
 		if ( $request_etag === $cached['etag'] ) {
 			// Return 304 - no database queries!
-			return new WP_REST_Response(
-				null,
-				304,
-				array(
-					'ETag'          => $cached['etag'],
-					'X-WC-Cache'    => 'HIT-304',
-					'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
-				)
-			);
+			$cache_headers['X-WC-Cache'] = 'HIT-304';
+			return new WP_REST_Response( null, 304, $cache_headers );
 		}
 
-		// Cache valid but ETag doesn't match - return cached data.
-		return new WP_REST_Response(
-			$cached['data'],
-			200,
-			array(
-				'ETag'          => $cached['etag'],
-				'X-WC-Cache'    => 'HIT-200',
-				'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
-			)
-		);
+		// Cache valid but ETag doesn't match - return cached data with full headers.
+		$cache_headers['X-WC-Cache'] = 'HIT-200';
+		return new WP_REST_Response( $cached['data'], 200, $cache_headers );
 	}
 
 	/**
@@ -397,6 +390,7 @@ trait RestApiCache {
 		// Set cache headers.
 		$response->header( 'ETag', $etag );
 		$response->header( 'Cache-Control', 'private, must-revalidate, max-age=' . $this->get_cache_ttl() );
+		$response->header( 'Date', gmdate( 'D, d M Y H:i:s' ) . ' GMT' );
 		$response->header( 'X-WC-Cache', 'MISS' );
 
 		// Prepare cached data.
