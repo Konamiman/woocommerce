@@ -32,7 +32,7 @@ trait RestApiCache {
 	protected function register_cache_hooks() {
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
-		add_filter( 'rest_pre_serve_request', array( $this, 'handle_rest_pre_serve_request' ), 10, 4 );
+		add_action( 'rest_pre_serve_request', array( $this, 'handle_rest_pre_serve_request' ), PHP_INT_MAX, 4 );
 	}
 
 	/**
@@ -330,8 +330,8 @@ trait RestApiCache {
 
 		$headers = $result->get_headers();
 		if ( isset( $headers['Date'] ) && isset( $headers['X-WC-Cache'] ) && 'HIT' === $headers['X-WC-Cache'] ) {
-			// Our Date header is set - prevent WordPress from overwriting it.
-			// We do this by ensuring the header is already sent.
+			// Send our Date header, replacing any previously sent Date headers.
+			// The 'true' parameter replaces previous headers with the same name.
 			header( 'Date: ' . $headers['Date'], true );
 		}
 
