@@ -292,9 +292,11 @@ trait RestApiCache {
 		$request_etag = $request->get_header( 'if_none_match' );
 
 		// Prepare cache headers (used for both 304 and 200 responses).
+		// Date header shows when the data was cached (important for max-age calculation).
 		$cache_headers = array(
 			'ETag'          => $cached['etag'],
 			'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
+			'Date'          => gmdate( 'D, d M Y H:i:s', $cached['created_at'] ) . ' GMT',
 		);
 
 		if ( $request_etag === $cached['etag'] ) {
