@@ -36,13 +36,25 @@ trait RestApiCache {
 	}
 
 	/**
+	 * Get the current request route.
+	 *
+	 * Helper method for controllers to avoid having to call $request->get_route() repeatedly.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return string Request route.
+	 */
+	protected function get_request_route( $request ) {
+		return $request->get_route();
+	}
+
+	/**
 	 * Get cache key information for the request.
 	 *
 	 * Override this method in classes to enable caching.
 	 * Return null to skip caching for this request.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return array|null Array with 'is_collection' (bool), 'key' (string), and optionally 'id' (int) or null to skip caching.
+	 * @return array|null Array with 'is_collection' (bool) and 'key' (string), or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
 		return null; // Default: no caching.

@@ -2171,23 +2171,24 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @return array|null Cache key info or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
-		$route = $request->get_route();
-
-		// Single product: /wc/v3/products/{id}
-		if ( preg_match( '#^/wc/v3/products/(\d+)$#', $route, $matches ) ) {
-			return array(
-				'is_collection' => false,
-				'key'           => 'wc_rest_product_' . $matches[1],
-			);
-		}
+		$route = $this->get_request_route( $request );
 
 		// Duplicate endpoint: /wc/v3/products/{id}/duplicate (skip caching - creates new product)
 		if ( strpos( $route, '/duplicate' ) !== false ) {
 			return null;
 		}
 
+		// Single product: /wc/v3/products/{id}
+		$product_id = $request->get_param( 'id' );
+		if ( $product_id && strpos( $route, '/wc/v3/products/' ) === 0 ) {
+			return array(
+				'is_collection' => false,
+				'key'           => 'wc_rest_product_' . $product_id,
+			);
+		}
+
 		// Collection endpoints: /wc/v3/products, /wc/v3/products/suggested-products
-		if ( strpos( $route, '/wc/v3/products' ) !== false ) {
+		if ( strpos( $route, '/wc/v3/products' ) === 0 ) {
 			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
 			return array(
 				'is_collection' => true,

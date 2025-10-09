@@ -1336,27 +1336,29 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @return array|null Cache key info or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
-		$route = $request->get_route();
-
-		// Single variation: /wc/v3/products/{product_id}/variations/{id}
-		if ( preg_match( '#^/wc/v3/products/\d+/variations/(\d+)$#', $route, $matches ) ) {
-			return array(
-				'is_collection' => false,
-				'key'           => 'wc_rest_variation_' . $matches[1],
-			);
-		}
+		$route = $this->get_request_route( $request );
 
 		// Generate endpoint: /wc/v3/products/{product_id}/variations/generate (skip caching - modifies data)
 		if ( strpos( $route, '/generate' ) !== false ) {
 			return null;
 		}
 
+		// Single variation: /wc/v3/products/{product_id}/variations/{id}
+		$variation_id = $request->get_param( 'id' );
+		if ( $variation_id && strpos( $route, '/variations/' ) !== false ) {
+			return array(
+				'is_collection' => false,
+				'key'           => 'wc_rest_variation_' . $variation_id,
+			);
+		}
+
 		// Variations collection: /wc/v3/products/{product_id}/variations
-		if ( preg_match( '#^/wc/v3/products/(\d+)/variations$#', $route, $matches ) ) {
+		$product_id = $request->get_param( 'product_id' );
+		if ( $product_id && strpos( $route, '/variations' ) !== false ) {
 			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
 			return array(
 				'is_collection' => true,
-				'key'           => 'wc_rest_variations_collection_' . $matches[1] . '_' . $query_hash,
+				'key'           => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
 			);
 		}
 
