@@ -1343,7 +1343,6 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 			return array(
 				'is_collection' => false,
 				'key'           => 'wc_rest_variation_' . $matches[1],
-				'id'            => (int) $matches[1],
 			);
 		}
 

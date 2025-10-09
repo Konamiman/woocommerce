@@ -2178,7 +2178,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 			return array(
 				'is_collection' => false,
 				'key'           => 'wc_rest_product_' . $matches[1],
-				'id'            => (int) $matches[1],
 			);
 		}
 

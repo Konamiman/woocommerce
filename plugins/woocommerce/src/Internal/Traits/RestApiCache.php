@@ -291,11 +291,14 @@ trait RestApiCache {
 		// Cache is valid - check ETag.
 		$request_etag = $request->get_header( 'if_none_match' );
 
+		// Determine cache visibility based on authentication.
+		$cache_visibility = is_user_logged_in() ? 'private' : 'public';
+
 		// Prepare cache headers (used for both 304 and 200 responses).
 		// Date header shows when the data was cached (important for max-age calculation).
 		$cache_headers = array(
 			'ETag'          => $cached['etag'],
-			'Cache-Control' => 'private, must-revalidate, max-age=' . $this->get_cache_ttl(),
+			'Cache-Control' => $cache_visibility . ', must-revalidate, max-age=' . $this->get_cache_ttl(),
 			'Date'          => gmdate( 'D, d M Y H:i:s', $cached['created_at'] ) . ' GMT',
 		);
 
@@ -375,9 +378,12 @@ trait RestApiCache {
 		// Generate ETag from the actual response content.
 		$etag = '"' . md5( wp_json_encode( $etag_data ) ) . '"';
 
+		// Determine cache visibility based on authentication.
+		$cache_visibility = is_user_logged_in() ? 'private' : 'public';
+
 		// Set cache headers.
 		$response->header( 'ETag', $etag );
-		$response->header( 'Cache-Control', 'private, must-revalidate, max-age=' . $this->get_cache_ttl() );
+		$response->header( 'Cache-Control', $cache_visibility . ', must-revalidate, max-age=' . $this->get_cache_ttl() );
 		$response->header( 'X-WC-Cache', 'MISS' );
 
 		// Prepare cached data.
