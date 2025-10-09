@@ -274,6 +274,11 @@ trait RestApiCache {
 	 * @return mixed Response or original result.
 	 */
 	public function handle_rest_pre_dispatch( $result, $server, $request ) {
+		// Check for cache skip parameter first to minimize overhead.
+		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
+			return $result;
+		}
+
 		// Only handle GET requests for this controller's endpoints.
 		if ( $result !== null || $request->get_method() !== 'GET' ) {
 			return $result;
@@ -282,12 +287,6 @@ trait RestApiCache {
 		// Check if this request matches this controller's routes.
 		$route = $request->get_route();
 		if ( ! $this->matches_route( $route ) ) {
-			return $result;
-		}
-
-		// Check for cache skip parameter.
-		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
-			$request->set_param( '_cache_skipped', true );
 			return $result;
 		}
 
@@ -356,6 +355,12 @@ trait RestApiCache {
 	 * @return WP_REST_Response Response object.
 	 */
 	public function handle_rest_post_dispatch( $response, $server, $request ) {
+		// Check for cache skip parameter first to minimize overhead.
+		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
+			$response->header( 'X-WC-Cache', 'SKIP' );
+			return $response;
+		}
+
 		// Only handle GET requests that succeeded.
 		if ( $request->get_method() !== 'GET' || $response->get_status() !== 200 ) {
 			return $response;
@@ -371,12 +376,6 @@ trait RestApiCache {
 		$headers = $response->get_headers();
 		if ( isset( $headers['X-WC-Cache'] ) ) {
 			return $response; // Headers already complete, nothing to do.
-		}
-
-		// If cache was skipped via _skip_cache parameter, add header but don't cache.
-		if ( $request->get_param( '_cache_skipped' ) ) {
-			$response->header( 'X-WC-Cache', 'SKIP' );
-			return $response;
 		}
 
 		// Get cache info.
