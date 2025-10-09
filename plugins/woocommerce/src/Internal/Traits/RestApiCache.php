@@ -265,11 +265,10 @@ trait RestApiCache {
 		}
 
 		// Store cache info for post-dispatch to reuse (avoid calling get_cache_key_info twice).
-		// Include controller class to ensure the same controller handles both pre and post dispatch.
-		$request->set_param( '_cache_info', array(
-			'cache_info'       => $cache_info,
-			'controller_class' => get_class( $this ),
-		) );
+		$request->set_param( '_cache_info', $cache_info );
+		
+		// Store controller class to ensure the same controller handles both pre and post dispatch.
+		$request->set_param( '_caching_controller_class', get_class( $this ) );
 
 		// Try to get cached response.
 		$cached = get_transient( $cache_info['key'] );
@@ -333,8 +332,7 @@ trait RestApiCache {
 	 */
 	public function handle_rest_send_nocache_headers( $send_no_cache_headers, $request ) {
 		// If any controller is handling caching for this request, don't let WordPress send no-cache headers.
-		$cache_data = $request->get_param( '_cache_info' );
-		if ( $cache_data && isset( $cache_data['cache_info'] ) ) {
+		if ( $request->get_param( '_cache_info' ) ) {
 			return false;
 		}
 
@@ -364,18 +362,17 @@ trait RestApiCache {
 		}
 
 		// Get cache info from pre-dispatch (already computed there).
-		$cache_data = $request->get_param( '_cache_info' );
-		if ( ! $cache_data || ! isset( $cache_data['cache_info'], $cache_data['controller_class'] ) ) {
+		$cache_info = $request->get_param( '_cache_info' );
+		if ( ! $cache_info ) {
 			// Pre-dispatch didn't set cache info, so this request doesn't use caching.
 			return $response;
 		}
 
 		// Verify this is the same controller that handled pre-dispatch.
-		if ( $cache_data['controller_class'] !== get_class( $this ) ) {
+		$caching_controller = $request->get_param( '_caching_controller_class' );
+		if ( $caching_controller !== get_class( $this ) ) {
 			return $response;
 		}
-
-		$cache_info = $cache_data['cache_info'];
 
 		// If this was a cache hit from pre-dispatch, all headers are already set.
 		// Pre-dispatch sets: ETag, Cache-Control, Date, X-WC-Cache
@@ -422,8 +419,9 @@ trait RestApiCache {
 			}
 		}
 
-		// Remove cache info so other controllers know this request was handled.
+		// Remove cache info and controller class so other controllers know this request was handled.
 		$request->set_param( '_cache_info', null );
+		$request->set_param( '_caching_controller_class', null );
 
 		return $response;
 	}
