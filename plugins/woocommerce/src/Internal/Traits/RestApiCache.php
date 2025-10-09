@@ -245,7 +245,7 @@ trait RestApiCache {
 	public function handle_rest_pre_dispatch( $result, $server, $request ) {
 		// Check for cache skip parameter first to minimize overhead.
 		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
-			return $result;
+			return null;
 		}
 
 		// Only handle GET requests for this controller's endpoints.
@@ -256,7 +256,7 @@ trait RestApiCache {
 		// Get cache key info - returns null if route doesn't match this controller.
 		$cache_info = $this->get_cache_key_info( $request );
 		if ( ! $cache_info ) {
-			return $result;
+			return null;
 		}
 
 		// Store cache info for post-dispatch to reuse (avoid calling get_cache_key_info twice).
@@ -267,17 +267,16 @@ trait RestApiCache {
 
 		// No cache or invalid cache structure - continue to normal processing.
 		if ( ! $cached || ! isset( $cached['hash'], $cached['etag'], $cached['data'], $cached['created_at'] ) ) {
-			return $result;
+			return null;
 		}
 
 		// Check if cache has expired based on creation time.
-		$current_time   = time();
+		$current_time    = time();
 		$expiration_time = $cached['created_at'] + $this->get_cache_ttl();
 		if ( $current_time >= $expiration_time ) {
 			// Cache expired - delete and continue to normal processing.
 			delete_transient( $cache_info['key'] );
-			$request->set_param( '_cache_info', $cache_info );
-			return $result;
+			return null;
 		}
 
 		// Calculate current hash to see if hooks have changed.
@@ -286,7 +285,7 @@ trait RestApiCache {
 		if ( $cached['hash'] !== $current_hash ) {
 			// Hooks have changed - invalidate cache.
 			delete_transient( $cache_info['key'] );
-			return $result;
+			return null;
 		}
 
 		// Cache is valid - check ETag.
