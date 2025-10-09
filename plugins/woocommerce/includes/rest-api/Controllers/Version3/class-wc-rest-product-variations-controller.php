@@ -1336,30 +1336,33 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @return array|null Cache key info or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
-		$route = $this->get_request_route( $request );
+		$matched_route = $this->get_matched_route( $request );
 
-		// Generate endpoint: /wc/v3/products/{product_id}/variations/generate (skip caching - modifies data)
-		if ( strpos( $route, '/generate' ) !== false ) {
+		if ( ! $matched_route ) {
 			return null;
 		}
 
-		// Single variation: /wc/v3/products/{product_id}/variations/{id}
-		$variation_id = $request->get_param( 'id' );
-		if ( $variation_id && strpos( $route, '/variations/' ) !== false ) {
-			return array(
-				'is_collection' => false,
-				'key'           => 'wc_rest_variation_' . $variation_id,
-			);
-		}
+		switch ( $matched_route ) {
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
+				// Single variation endpoint.
+				$variation_id = $request->get_param( 'id' );
+				return array(
+					'is_collection' => false,
+					'key'           => 'wc_rest_variation_' . $variation_id,
+				);
 
-		// Variations collection: /wc/v3/products/{product_id}/variations
-		$product_id = $request->get_param( 'product_id' );
-		if ( $product_id && strpos( $route, '/variations' ) !== false ) {
-			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
-			return array(
-				'is_collection' => true,
-				'key'           => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
-			);
+			case '/wc/v3/' . $this->rest_base . '/generate':
+				// Generate endpoint - skip caching (modifies data).
+				return null;
+
+			case '/wc/v3/' . $this->rest_base:
+				// Variations collection endpoint.
+				$product_id = $request->get_param( 'product_id' );
+				$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+				return array(
+					'is_collection' => true,
+					'key'           => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
+				);
 		}
 
 		return null;

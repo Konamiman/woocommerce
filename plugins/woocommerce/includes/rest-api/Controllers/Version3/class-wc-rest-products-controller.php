@@ -2171,29 +2171,33 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @return array|null Cache key info or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
-		$route = $this->get_request_route( $request );
+		$matched_route = $this->get_matched_route( $request );
 
-		// Duplicate endpoint: /wc/v3/products/{id}/duplicate (skip caching - creates new product)
-		if ( strpos( $route, '/duplicate' ) !== false ) {
+		if ( ! $matched_route ) {
 			return null;
 		}
 
-		// Single product: /wc/v3/products/{id}
-		$product_id = $request->get_param( 'id' );
-		if ( $product_id && strpos( $route, '/wc/v3/products/' ) === 0 ) {
-			return array(
-				'is_collection' => false,
-				'key'           => 'wc_rest_product_' . $product_id,
-			);
-		}
+		switch ( $matched_route ) {
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
+				// Single product endpoint.
+				$product_id = $request->get_param( 'id' );
+				return array(
+					'is_collection' => false,
+					'key'           => 'wc_rest_product_' . $product_id,
+				);
 
-		// Collection endpoints: /wc/v3/products, /wc/v3/products/suggested-products
-		if ( strpos( $route, '/wc/v3/products' ) === 0 ) {
-			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
-			return array(
-				'is_collection' => true,
-				'key'           => 'wc_rest_products_collection_' . md5( $route . $query_hash ),
-			);
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)/duplicate':
+				// Duplicate endpoint - skip caching (creates new product).
+				return null;
+
+			case '/wc/v3/' . $this->rest_base:
+			case '/wc/v3/' . $this->rest_base . '/suggested-products':
+				// Collection endpoints.
+				$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+				return array(
+					'is_collection' => true,
+					'key'           => 'wc_rest_products_collection_' . md5( $matched_route . $query_hash ),
+				);
 		}
 
 		return null;

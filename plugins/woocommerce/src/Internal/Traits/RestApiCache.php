@@ -48,6 +48,29 @@ trait RestApiCache {
 	}
 
 	/**
+	 * Get the matched route pattern for the current request.
+	 *
+	 * This returns the route pattern that was matched (e.g., '/wc/v3/products/(?P<id>[\d]+)')
+	 * rather than the actual route (e.g., '/wc/v3/products/123').
+	 * Useful for determining which endpoint was matched without parsing.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return string|null Matched route pattern or null if not available.
+	 */
+	protected function get_matched_route( $request ) {
+		$route = $request->get_route();
+		$routes = rest_get_server()->get_routes();
+		
+		foreach ( $routes as $pattern => $handlers ) {
+			if ( preg_match( '@^' . $pattern . '$@i', $route ) ) {
+				return $pattern;
+			}
+		}
+		
+		return null;
+	}
+
+	/**
 	 * Get cache key information for the request.
 	 *
 	 * Override this method in classes to enable caching.
