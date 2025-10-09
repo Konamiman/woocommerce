@@ -32,6 +32,7 @@ trait RestApiCache {
 	protected function register_cache_hooks() {
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
+		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 2 );
 	}
 
 	/**
@@ -308,6 +309,24 @@ trait RestApiCache {
 		// Cache valid but ETag doesn't match - return cached data with full headers.
 		$cache_headers['X-WC-Cache'] = 'HIT';
 		return new WP_REST_Response( $cached['data'], 200, $cache_headers );
+	}
+
+	/**
+	 * Handle rest_send_nocache_headers filter to prevent WordPress from overriding our cache headers.
+	 *
+	 * @internal
+	 *
+	 * @param bool            $send_no_cache_headers Whether to send no-cache headers.
+	 * @param WP_REST_Request $request               Request object.
+	 * @return bool False if we're handling caching, original value otherwise.
+	 */
+	public function handle_rest_send_nocache_headers( $send_no_cache_headers, $request ) {
+		// If we're handling caching for this request, don't let WordPress send no-cache headers.
+		if ( $request->get_param( '_cache_info' ) ) {
+			return false;
+		}
+
+		return $send_no_cache_headers;
 	}
 
 	/**
