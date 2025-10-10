@@ -426,13 +426,24 @@ trait RestApiCache {
 	 *
 	 * @internal
 	 *
-	 * @param bool            $send_no_cache_headers Whether to send no-cache headers.
-	 * @param WP_REST_Request $request               Request object.
+	 * @param bool $send_no_cache_headers Whether to send no-cache headers.
 	 * @return bool False if we're handling caching, original value otherwise.
 	 */
-	public function handle_rest_send_nocache_headers( bool $send_no_cache_headers, WP_REST_Request $request ): bool {
-		// If any controller is handling caching for this request, don't let WordPress send no-cache headers.
-		return $request->get_param( '_cache_uid_info' ) ? false : $send_no_cache_headers;
+	public function handle_rest_send_nocache_headers( bool $send_no_cache_headers ): bool {
+		global $wp;
+		
+		// Try to get the request from the global scope.
+		$request = null;
+		if ( isset( $wp->query_vars['rest_route'] ) ) {
+			$request = rest_get_server()->get_request();
+		}
+		
+		// If we have a request and it's being cached, prevent no-cache headers.
+		if ( $request && $request->get_param( '_cache_uid_info' ) ) {
+			return false;
+		}
+
+		return $send_no_cache_headers;
 	}
 
 	/**

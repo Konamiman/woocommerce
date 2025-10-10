@@ -69,7 +69,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		// Register REST API caching hooks.
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
-		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 2 );
+		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 1 );
 
 		// Register cache invalidation hooks for immediate invalidation when products change.
 		add_action( 'woocommerce_new_product', array( $this, 'handle_product_change' ), 10, 1 );
