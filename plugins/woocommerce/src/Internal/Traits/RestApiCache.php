@@ -38,21 +38,12 @@ trait RestApiCache {
 	 * Call this from the controller's constructor or init method.
 	 */
 	protected function register_cache_hooks() {
+		// Get and store the cache instance once for better performance.
+		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
+
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
 		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 2 );
-	}
-
-	/**
-	 * Get the RestApiObjectCache instance.
-	 *
-	 * @return RestApiObjectCache
-	 */
-	protected function get_cache_instance() {
-		if ( null === $this->cache_instance ) {
-			$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
-		}
-		return $this->cache_instance;
 	}
 
 	/**
@@ -356,7 +347,7 @@ trait RestApiCache {
 		$cache_id = $entity_type . '-' . $uid_info['request_hash'];
 
 		// Try to get cached response.
-		$cached = $this->get_cache_instance()->get( $cache_id );
+		$cached = $this->cache_instance->get( $cache_id );
 
 		// No cache or invalid cache structure - continue to normal processing.
 		if ( ! $cached || ! isset( $cached['hooks_hash'], $cached['etag'], $cached['data'], $cached['created_at'], $cached['entity_versions'] ) ) {
@@ -368,7 +359,7 @@ trait RestApiCache {
 		$expiration_time = $cached['created_at'] + $this->get_cache_ttl();
 		if ( $current_time >= $expiration_time ) {
 			// Cache expired - delete and continue to normal processing.
-			$this->get_cache_instance()->remove( $cache_id );
+			$this->cache_instance->remove( $cache_id );
 			return null;
 		}
 
@@ -377,7 +368,7 @@ trait RestApiCache {
 
 		if ( $cached['hooks_hash'] !== $current_hash ) {
 			// Hooks have changed - invalidate cache.
-			$this->get_cache_instance()->remove( $cache_id );
+			$this->cache_instance->remove( $cache_id );
 			return null;
 		}
 
@@ -512,7 +503,7 @@ trait RestApiCache {
 		$cache_id = $entity_type . '-' . $uid_info['request_hash'];
 
 		// Cache the response using RestApiObjectCache.
-		$this->get_cache_instance()->set( $cache_data, $cache_id, $this->get_cache_ttl() );
+		$this->cache_instance->set( $cache_data, $cache_id, $this->get_cache_ttl() );
 
 		// Remove UID info and controller class so other controllers know this request was handled.
 		$request->set_param( '_cache_uid_info', null );
@@ -552,6 +543,6 @@ trait RestApiCache {
 	 * This removes all cached REST API responses.
 	 */
 	public function flush_all_caches() {
-		$this->get_cache_instance()->flush();
+		$this->cache_instance->flush();
 	}
 }
