@@ -37,7 +37,7 @@ trait RestApiCache {
 	 *
 	 * Call this from the controller's constructor or init method.
 	 */
-	protected function register_cache_hooks() {
+	protected function register_cache_hooks(): void {
 		// Get and store the cache instance once for better performance.
 		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
 
@@ -54,7 +54,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request object.
 	 * @return string Request route.
 	 */
-	protected function get_request_route( $request ) {
+	protected function get_request_route( WP_REST_Request $request ): string {
 		return $request->get_route();
 	}
 
@@ -68,7 +68,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request object.
 	 * @return string|null Matched route pattern or null if not available.
 	 */
-	protected function get_matched_route( $request ) {
+	protected function get_matched_route( WP_REST_Request $request ): ?string {
 		$route = $request->get_route();
 		$routes = rest_get_server()->get_routes();
 		
@@ -88,7 +88,7 @@ trait RestApiCache {
 	 *
 	 * @return string|null Entity type (e.g., 'product', 'variation'), or null if no default.
 	 */
-	protected function get_default_entity_type() {
+	protected function get_default_entity_type(): ?string {
 		return null;
 	}
 
@@ -100,7 +100,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request object.
 	 * @return string|null Entity type if the request is cacheable, null otherwise.
 	 */
-	protected function get_cacheable_entity_type( $request ) {
+	protected function get_cacheable_entity_type( WP_REST_Request $request ): ?string {
 		// Only cache GET requests by default.
 		if ( $request->get_method() !== 'GET' ) {
 			return null;
@@ -119,7 +119,7 @@ trait RestApiCache {
 	 * @param int    $entity_id Entity ID.
 	 * @return int|null Entity version, or null if not available.
 	 */
-	protected function get_entity_version_core( $entity_type, $entity_id ) {
+	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
 		return null;
 	}
 
@@ -132,7 +132,7 @@ trait RestApiCache {
 	 * @param int    $entity_id Entity ID.
 	 * @return int|null Entity version, or null if not available.
 	 */
-	protected function get_entity_version( $entity_type, $entity_id ) {
+	protected function get_entity_version( string $entity_type, int $entity_id ): ?int {
 		$transient_key = 'wc_rest_api_entity_version_' . $entity_type . '_' . $entity_id;
 		$version       = get_transient( $transient_key );
 
@@ -156,7 +156,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request object.
 	 * @return array|null Array with 'request_hash' (string) and 'entity_type' (string), or null to skip caching.
 	 */
-	protected function get_request_uid_info( $request ) {
+	protected function get_request_uid_info( WP_REST_Request $request ): ?array {
 		$entity_type = $this->get_cacheable_entity_type( $request );
 		
 		if ( ! $entity_type ) {
@@ -182,7 +182,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request object.
 	 * @return array Array of filter names.
 	 */
-	protected function get_cache_hash_filters( $request ) {
+	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
 		return array();
 	}
 
@@ -194,7 +194,7 @@ trait RestApiCache {
 	 * @param array $data Response data.
 	 * @return array Array of entity IDs.
 	 */
-	protected function extract_entity_ids( $data ) {
+	protected function extract_entity_ids( array $data ): array {
 		$ids = array();
 
 		// Collections are indexed arrays with numeric keys starting at 0.
@@ -220,7 +220,7 @@ trait RestApiCache {
 	 * @param array $data Response data.
 	 * @return array Cleaned data.
 	 */
-	protected function remove_non_deterministic_fields( $data ) {
+	protected function remove_non_deterministic_fields( array $data ): array {
 		return $data; // Default: no cleaning.
 	}
 
@@ -231,7 +231,7 @@ trait RestApiCache {
 	 *
 	 * @return int Cache TTL in seconds.
 	 */
-	protected function get_cache_ttl() {
+	protected function get_cache_ttl(): int {
 		return 5 * MINUTE_IN_SECONDS;
 	}
 
@@ -241,7 +241,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request object.
 	 * @return string Cache hash.
 	 */
-	protected function generate_cache_hash( $request ) {
+	protected function generate_cache_hash( WP_REST_Request $request ): string {
 		global $wp_filter;
 
 		$cache_hash_data = array();
@@ -286,7 +286,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request Request used to generate the response.
 	 * @return mixed Response or original result.
 	 */
-	public function handle_rest_pre_dispatch( $result, $server, $request ) {
+	public function handle_rest_pre_dispatch( $result, WP_REST_Server $server, WP_REST_Request $request ) {
 		// Check for cache skip parameter first to minimize overhead.
 		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
 			return null;
@@ -400,7 +400,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request $request               Request object.
 	 * @return bool False if we're handling caching, original value otherwise.
 	 */
-	public function handle_rest_send_nocache_headers( $send_no_cache_headers, $request ) {
+	public function handle_rest_send_nocache_headers( bool $send_no_cache_headers, WP_REST_Request $request ): bool {
 		// If any controller is handling caching for this request, don't let WordPress send no-cache headers.
 		if ( $request->get_param( '_cache_uid_info' ) ) {
 			return false;
@@ -419,7 +419,7 @@ trait RestApiCache {
 	 * @param WP_REST_Request  $request  Request used to generate the response.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function handle_rest_post_dispatch( $response, $server, $request ) {
+	public function handle_rest_post_dispatch( WP_REST_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_REST_Response {
 		// Check for cache skip parameter first to minimize overhead.
 		if ( $request->get_param( '_skip_cache' ) === 'true' ) {
 			$response->header( 'X-WC-Cache', 'SKIP' );
@@ -521,7 +521,7 @@ trait RestApiCache {
 	 * @param string $entity_type Entity type.
 	 * @param int    $entity_id   Entity ID.
 	 */
-	public function invalidate_entity_cache( $entity_type, $entity_id ) {
+	public function invalidate_entity_cache( string $entity_type, int $entity_id ): void {
 		// Delete the entity version transient to force cache invalidation.
 		$transient_key = 'wc_rest_api_entity_version_' . $entity_type . '_' . $entity_id;
 		delete_transient( $transient_key );
@@ -541,7 +541,7 @@ trait RestApiCache {
 	 *
 	 * This removes all cached REST API responses.
 	 */
-	public function flush_all_caches() {
+	public function flush_all_caches(): void {
 		$this->cache_instance->flush();
 	}
 }

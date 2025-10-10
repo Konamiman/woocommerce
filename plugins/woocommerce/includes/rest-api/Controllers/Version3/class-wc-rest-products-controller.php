@@ -58,7 +58,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 *
 	 * Overrides the parent to cache ProductUtil instance.
 	 */
-	protected function register_cache_hooks() {
+	protected function register_cache_hooks(): void {
 		// Cache the ProductUtil instance for version retrieval.
 		$this->product_util = wc_get_container()->get( ProductUtil::class );
 
@@ -71,7 +71,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 *
 	 * @return string Entity type.
 	 */
-	protected function get_default_entity_type() {
+	protected function get_default_entity_type(): string {
 		return 'product';
 	}
 
@@ -82,7 +82,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @param int    $entity_id   Entity ID.
 	 * @return int|null Entity version (timestamp), or null if not available.
 	 */
-	protected function get_entity_version_core( $entity_type, $entity_id ) {
+	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
 		if ( 'product' !== $entity_type ) {
 			return null;
 		}
