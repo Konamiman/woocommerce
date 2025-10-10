@@ -102,11 +102,7 @@ trait RestApiCache {
 	 */
 	protected function get_cacheable_entity_type( WP_REST_Request $request ): ?string {
 		// Only cache GET requests by default.
-		if ( $request->get_method() !== 'GET' ) {
-			return null;
-		}
-
-		return $this->get_default_entity_type();
+		return $request->get_method() === 'GET' ? $this->get_default_entity_type() : null;
 	}
 
 	/**
@@ -402,11 +398,7 @@ trait RestApiCache {
 	 */
 	public function handle_rest_send_nocache_headers( bool $send_no_cache_headers, WP_REST_Request $request ): bool {
 		// If any controller is handling caching for this request, don't let WordPress send no-cache headers.
-		if ( $request->get_param( '_cache_uid_info' ) ) {
-			return false;
-		}
-
-		return $send_no_cache_headers;
+		return $request->get_param( '_cache_uid_info' ) ? false : $send_no_cache_headers;
 	}
 
 	/**

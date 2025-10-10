@@ -50,17 +50,9 @@ class ProductUtil {
 
 		// Try modification date first, fall back to creation date.
 		$date_modified = $product->get_date_modified();
-		if ( $date_modified ) {
-			return $date_modified->getTimestamp();
-		}
-
 		$date_created = $product->get_date_created();
-		if ( $date_created ) {
-			return $date_created->getTimestamp();
-		}
-
-		// Product exists but has no dates (shouldn't happen).
-		return null;
+		
+		return $date_modified ? $date_modified->getTimestamp() : ( $date_created ? $date_created->getTimestamp() : null );
 	}
 
 	/**

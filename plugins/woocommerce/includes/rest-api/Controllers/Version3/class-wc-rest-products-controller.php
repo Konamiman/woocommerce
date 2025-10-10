@@ -83,11 +83,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @return int|null Entity version (timestamp), or null if not available.
 	 */
 	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
-		if ( 'product' !== $entity_type ) {
-			return null;
-		}
-
-		return $this->product_util->get_last_modified_date( $entity_id );
+		return 'product' === $entity_type ? $this->product_util->get_last_modified_date( $entity_id ) : null;
 	}
 
 	/**
