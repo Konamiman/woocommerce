@@ -506,8 +506,16 @@ trait RestApiCache {
 	/**
 	 * Invalidate cache for an entity.
 	 *
-	 * Call this method when an entity changes to clear its caches.
-	 * This invalidates the entity version transient, which will cause all cached responses
+	 * NOTE: This method is not required if get_entity_version_core() is properly implemented
+	 * to return the actual entity version from the database (e.g., post_modified timestamp).
+	 * In that case, cache invalidation happens automatically when entity versions change.
+	 *
+	 * This method exists as a fallback for explicit cache invalidation, useful when:
+	 * - Entity versioning is not implemented or not reliable
+	 * - You need to force invalidation for other reasons
+	 * - Testing or debugging cache behavior
+	 *
+	 * Deletes the entity version transient, which will cause all cached responses
 	 * containing this entity to be invalidated on next retrieval.
 	 *
 	 * @param string $entity_type Entity type.
