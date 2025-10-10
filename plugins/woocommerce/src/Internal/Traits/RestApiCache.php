@@ -258,6 +258,8 @@ trait RestApiCache {
 		/**
 		 * Filter cache hash data.
 		 *
+		 * @since 10.4.0
+		 *
 		 * @param array           $cache_hash_data Hash data.
 		 * @param WP_REST_Request $request         Request object.
 		 * @param object          $controller      Controller instance.
@@ -520,6 +522,8 @@ trait RestApiCache {
 
 		/**
 		 * Fires after cache invalidation for an entity.
+		 *
+		 * @since 10.4.0
 		 *
 		 * @param string $entity_type Entity type.
 		 * @param int    $entity_id   Entity ID.
