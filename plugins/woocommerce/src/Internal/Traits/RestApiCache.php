@@ -93,15 +93,20 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Check if a request is cacheable.
+	 * Get the entity type for a cacheable request.
 	 *
-	 * Override this method in classes to enable caching.
+	 * Override this method in classes to enable caching and specify the entity type.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return bool True if the request should be cached, false otherwise.
+	 * @return string|null Entity type if the request is cacheable, null otherwise.
 	 */
-	protected function request_is_cacheable( $request ) {
-		return false; // Default: no caching.
+	protected function get_cacheable_entity_type( $request ) {
+		// Only cache GET requests by default.
+		if ( $request->get_method() !== 'GET' ) {
+			return null;
+		}
+
+		return $this->get_default_entity_type();
 	}
 
 	/**
@@ -145,14 +150,16 @@ trait RestApiCache {
 	/**
 	 * Get request UID information for caching.
 	 *
-	 * Override this method in classes to provide entity_type or customize the request_hash.
+	 * Override this method in classes to customize the request_hash.
 	 * Return null to skip caching for this request.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return array|null Array with 'request_hash' (string) and optional 'entity_type' (string), or null to skip caching.
+	 * @return array|null Array with 'request_hash' (string) and 'entity_type' (string), or null to skip caching.
 	 */
 	protected function get_request_uid_info( $request ) {
-		if ( ! $this->request_is_cacheable( $request ) ) {
+		$entity_type = $this->get_cacheable_entity_type( $request );
+		
+		if ( ! $entity_type ) {
 			return null;
 		}
 
@@ -163,6 +170,7 @@ trait RestApiCache {
 
 		return array(
 			'request_hash' => $request_hash,
+			'entity_type'  => $entity_type,
 		);
 	}
 
@@ -300,19 +308,18 @@ trait RestApiCache {
 			return null;
 		}
 
-		// Determine entity type.
-		$entity_type = $uid_info['entity_type'] ?? $this->get_default_entity_type();
+		// Verify entity type is present.
+		$entity_type = $uid_info['entity_type'] ?? null;
 		if ( ! $entity_type ) {
 			wc_doing_it_wrong(
 				__METHOD__,
-				'Request is cacheable but no entity type is provided. Override get_request_uid_info to return entity_type or get_default_entity_type to provide a default.',
+				'Request is cacheable but no entity type is provided. Override get_cacheable_entity_type to return an entity type.',
 				'9.5.0'
 			);
 			return null;
 		}
 
-		// Store UID info and entity type for post-dispatch.
-		$uid_info['entity_type'] = $entity_type;
+		// Store UID info for post-dispatch.
 		$request->set_param( '_cache_uid_info', $uid_info );
 		
 		// Store controller class to ensure the same controller handles both pre and post dispatch.
