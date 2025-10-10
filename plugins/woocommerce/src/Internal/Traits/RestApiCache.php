@@ -173,19 +173,19 @@ trait RestApiCache {
 	protected function get_request_uid_info( WP_REST_Request $request ): ?array {
 		$entity_type = $this->get_cacheable_entity_type( $request );
 		
-		if ( ! $entity_type ) {
-			return null;
+		$uid_info = null;
+
+		if ( $entity_type ) {
+			// Generate hash from request route and query string.
+			$route        = $request->get_route();
+			$query_params = $request->get_query_params();
+			$request_hash = md5( $route . wp_json_encode( $query_params ) );
+
+			$uid_info = array(
+				'request_hash' => $request_hash,
+				'entity_type'  => $entity_type,
+			);
 		}
-
-		// Generate hash from request route and query string.
-		$route        = $request->get_route();
-		$query_params = $request->get_query_params();
-		$request_hash = md5( $route . wp_json_encode( $query_params ) );
-
-		$uid_info = array(
-			'request_hash' => $request_hash,
-			'entity_type'  => $entity_type,
-		);
 
 		/**
 		 * Filter the request UID information for caching.
