@@ -25,6 +25,13 @@ use WP_REST_Server;
 trait RestApiCache {
 
 	/**
+	 * Current REST API request being processed.
+	 *
+	 * @var WP_REST_Request|null
+	 */
+	private $current_request = null;
+
+	/**
 	 * Register cache-related hooks.
 	 *
 	 * Call this from the controller's constructor or init method.
@@ -350,8 +357,9 @@ trait RestApiCache {
 		// Build cache ID from entity type and request hash.
 		$cache_id = $entity_type . '-' . $uid_info['request_hash'];
 
-		// Try to get cached response.
-		$cached = $this->cache_instance->get( $cache_id );
+		// Try to get cached response from transient.
+		$transient_key = 'wc_rest_api_cache_' . $cache_id;
+		$cached        = get_transient( $transient_key );
 
 		// No cache or invalid cache structure - continue to normal processing.
 		if ( ! $cached || ! isset( $cached['hooks_hash'], $cached['etag'], $cached['data'], $cached['created_at'], $cached['entity_versions'] ) ) {
@@ -383,7 +391,7 @@ trait RestApiCache {
 			// If current version is null or doesn't match cached version, invalidate cache.
 			if ( null === $current_version || $current_version !== $cached_version ) {
 				// Entity has been modified - invalidate cache.
-				$this->cache_instance->remove( $cache_id );
+				delete_transient( $transient_key );
 				return null;
 			}
 		}
@@ -514,8 +522,9 @@ trait RestApiCache {
 		// Build cache ID from entity type and request hash.
 		$cache_id = $entity_type . '-' . $uid_info['request_hash'];
 
-		// Cache the response using RestApiObjectCache.
-		$this->cache_instance->set( $cache_data, $cache_id, $this->get_cache_ttl() );
+		// Cache the response using transient.
+		$transient_key = 'wc_rest_api_cache_' . $cache_id;
+		set_transient( $transient_key, $cache_data, $this->get_cache_ttl() );
 
 		// Remove UID info and controller class so other controllers know this request was handled.
 		$request->set_param( '_cache_uid_info', null );
