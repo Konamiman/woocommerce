@@ -1495,40 +1495,4 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 			$this->invalidate_entity_cache( 'product', $variation->get_parent_id() );
 		}
 	}
-
-	/**
-	 * Handle variation meta change events to invalidate cache.
-	 *
-	 * Invalidates cache when variation meta keys that affect the REST API response are updated.
-	 *
-	 * @param int    $meta_id    Meta ID.
-	 * @param int    $object_id  Object ID (variation ID).
-	 * @param string $meta_key   Meta key.
-	 * @param mixed  $meta_value Meta value.
-	 */
-	public function handle_variation_meta_change( int $meta_id, int $object_id, string $meta_key, $meta_value ): void {
-		// Only invalidate for variation-related meta keys that affect the REST API response.
-		$variation_meta_keys = array(
-			'_stock',
-			'_stock_status',
-			'_price',
-			'_regular_price',
-			'_sale_price',
-			'_sku',
-			'_weight',
-			'_length',
-			'_width',
-			'_height',
-			'_thumbnail_id',
-		);
-
-		if ( ! in_array( $meta_key, $variation_meta_keys, true ) ) {
-			return;
-		}
-
-		// Check if this is a variation.
-		if ( 'product_variation' === get_post_type( $object_id ) ) {
-			$this->handle_variation_change( $object_id );
-		}
-	}
 }

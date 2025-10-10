@@ -2245,53 +2245,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	}
 
 	/**
-	 * Handle product meta change events to invalidate cache.
-	 *
-	 * Invalidates cache when product meta keys that affect the REST API response are updated.
-	 *
-	 * @param int    $meta_id    Meta ID.
-	 * @param int    $object_id  Object ID (product ID).
-	 * @param string $meta_key   Meta key.
-	 * @param mixed  $meta_value Meta value.
-	 */
-	public function handle_product_meta_change( int $meta_id, int $object_id, string $meta_key, $meta_value ): void {
-		// Only invalidate for product-related meta keys that affect the REST API response.
-		$product_meta_keys = array(
-			'_stock',
-			'_stock_status',
-			'_price',
-			'_regular_price',
-			'_sale_price',
-			'_sku',
-			'_global_unique_id',
-			'_featured',
-			'_visibility',
-			'_tax_status',
-			'_tax_class',
-			'_manage_stock',
-			'_backorders',
-			'_sold_individually',
-			'_weight',
-			'_length',
-			'_width',
-			'_height',
-			'_virtual',
-			'_downloadable',
-			'_product_image_gallery',
-			'_thumbnail_id',
-		);
-
-		if ( ! in_array( $meta_key, $product_meta_keys, true ) ) {
-			return;
-		}
-
-		// Check if this is a product.
-		if ( 'product' === get_post_type( $object_id ) ) {
-			$this->handle_product_change( $object_id );
-		}
-	}
-
-	/**
 	 * Get filter names to include in cache hash.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -2302,6 +2255,42 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 			'woocommerce_rest_prepare_product_object',
 			'rest_prepare_product',
 			'woocommerce_rest_product_object_query',
+		);
+	}
+
+	/**
+	 * Get data for ETag generation.
+	 *
+	 * @param array $data Response data.
+	 * @return array Cleaned data for ETag generation.
+	 */
+	protected function get_data_for_etag( array $data ): array {
+		if ( isset( $data[0] ) ) {
+			// Collection response - remove related_ids from each product.
+			$clean_data = array();
+			foreach ( $data as $key => $product ) {
+				if ( isset( $product['related_ids'] ) ) {
+					$clean_product = $product;
+					unset( $clean_product['related_ids'] );
+					$clean_data[ $key ] = $clean_product;
+				} else {
+					$clean_data[ $key ] = $product;
+				}
+			}
+			return $clean_data;
+		}
+
+		// Single product response - remove related_ids.
+		if ( isset( $data['related_ids'] ) ) {
+			$clean_data = $data;
+			unset( $clean_data['related_ids'] );
+			return $clean_data;
+		}
+
+		return $data;
+	}
+}
+merce_rest_product_object_query',
 		);
 	}
 
