@@ -182,10 +182,24 @@ trait RestApiCache {
 		$query_params = $request->get_query_params();
 		$request_hash = md5( $route . wp_json_encode( $query_params ) );
 
-		return array(
+		$uid_info = array(
 			'request_hash' => $request_hash,
 			'entity_type'  => $entity_type,
 		);
+
+		/**
+		 * Filter the request UID information for caching.
+		 *
+		 * Allows customization of the cache key and entity type for a request.
+		 * Return null to skip caching for the current request.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param array|null      $uid_info  Array with 'request_hash' and 'entity_type', or null to skip caching.
+		 * @param WP_REST_Request $request   Request object.
+		 * @param object          $controller Controller instance.
+		 */
+		return apply_filters( 'woocommerce_rest_api_request_uid_info', $uid_info, $request, $this );
 	}
 
 	/**
