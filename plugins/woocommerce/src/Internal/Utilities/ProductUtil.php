@@ -12,10 +12,11 @@ class ProductUtil {
 	 * Get the last modified version for a product.
 	 *
 	 * Returns a timestamp that changes whenever the product is modified.
+	 * Falls back to creation date if modification date isn't available.
 	 * This is used for cache invalidation in the REST API.
 	 *
 	 * @param int $product_id Product ID.
-	 * @return int|null Timestamp of last modification, or null if product doesn't exist.
+	 * @return int|null Timestamp of last modification (or creation), or null if product doesn't exist.
 	 */
 	public function get_last_modified_version( $product_id ) {
 		global $wpdb;
@@ -24,19 +25,21 @@ class ProductUtil {
 		$data_store = \WC_Data_Store::load( 'product' );
 		if ( is_a( $data_store, \WC_Product_Data_Store_CPT::class ) ) {
 			// Query the posts table directly for performance.
+			// Use COALESCE to fall back to post_date_gmt if post_modified_gmt is empty.
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$post_modified = $wpdb->get_var(
+			$post_date = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT post_modified_gmt FROM {$wpdb->posts} WHERE ID = %d",
+					"SELECT COALESCE(NULLIF(post_modified_gmt, '0000-00-00 00:00:00'), post_date_gmt) FROM {$wpdb->posts} WHERE ID = %d",
 					$product_id
 				)
 			);
 
-			if ( ! $post_modified ) {
+			if ( ! $post_date ) {
+				// Product doesn't exist.
 				return null;
 			}
 
-			return strtotime( $post_modified );
+			return strtotime( $post_date );
 		}
 
 		// Fallback: Use wc_get_product for custom data stores.
@@ -45,12 +48,19 @@ class ProductUtil {
 			return null;
 		}
 
+		// Try modification date first, fall back to creation date.
 		$date_modified = $product->get_date_modified();
-		if ( ! $date_modified ) {
-			return null;
+		if ( $date_modified ) {
+			return $date_modified->getTimestamp();
 		}
 
-		return $date_modified->getTimestamp();
+		$date_created = $product->get_date_created();
+		if ( $date_created ) {
+			return $date_created->getTimestamp();
+		}
+
+		// Product exists but has no dates (shouldn't happen).
+		return null;
 	}
 
 	/**
