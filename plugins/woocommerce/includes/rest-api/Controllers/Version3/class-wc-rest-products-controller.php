@@ -69,9 +69,9 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	/**
 	 * Get the default entity type for caching.
 	 *
-	 * @return string Entity type.
+	 * @return string|null Entity type.
 	 */
-	protected function get_default_entity_type(): string {
+	protected function get_default_entity_type(): ?string {
 		return 'product';
 	}
 
@@ -2206,52 +2206,12 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * ------------------------------------------------------------------------- */
 
 	/**
-	 * Get cache key information for the request.
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return array|null Cache key info or null to skip caching.
-	 */
-	protected function get_cache_key_info( $request ) {
-		$matched_route = $this->get_matched_route( $request );
-
-		if ( ! $matched_route ) {
-			return null;
-		}
-
-		// Generate hash from query params for cache key differentiation.
-		$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
-
-		switch ( $matched_route ) {
-			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
-				// Single product endpoint.
-				$product_id = $request->get_param( 'id' );
-				return array(
-					'key'       => 'wc_rest_product_' . $product_id . '_' . $query_hash,
-					'entity_id' => $product_id,
-				);
-
-			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)/duplicate':
-				// Duplicate endpoint - skip caching (creates new product).
-				return null;
-
-			case '/wc/v3/' . $this->rest_base:
-			case '/wc/v3/' . $this->rest_base . '/suggested-products':
-				// Collection endpoints.
-				return array(
-					'key' => 'wc_rest_products_collection_' . md5( $matched_route . $query_hash ),
-				);
-		}
-
-		return null;
-	}
-
-	/**
 	 * Get filter names to include in cache hash.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return array Filter names.
 	 */
-	protected function get_cache_hash_filters( $request ) {
+	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
 		return array(
 			'woocommerce_rest_prepare_product_object',
 			'rest_prepare_product',
@@ -2265,7 +2225,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @param array $data Response data.
 	 * @return array Cleaned data.
 	 */
-	protected function remove_non_deterministic_fields( $data ) {
+	protected function remove_non_deterministic_fields( array $data ): array {
 		if ( isset( $data[0] ) ) {
 			// Collection response - remove related_ids from each product.
 			$clean_data = array();
