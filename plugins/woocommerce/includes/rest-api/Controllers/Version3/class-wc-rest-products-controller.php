@@ -77,6 +77,11 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		add_action( 'woocommerce_delete_product', array( $this, 'handle_product_change' ), 10, 1 );
 		add_action( 'woocommerce_trash_product', array( $this, 'handle_product_change' ), 10, 1 );
 		add_action( 'woocommerce_untrash_product', array( $this, 'handle_product_change' ), 10, 1 );
+
+		// When product meta changes (e.g., stock updates).
+		add_action( 'updated_post_meta', array( $this, 'handle_product_meta_change' ), 10, 4 );
+		add_action( 'added_post_meta', array( $this, 'handle_product_meta_change' ), 10, 4 );
+		add_action( 'deleted_post_meta', array( $this, 'handle_product_meta_change' ), 10, 4 );
 	}
 
 	/**
@@ -2222,11 +2227,68 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * Handle product change events to invalidate cache.
 	 *
 	 * This ensures immediate cache invalidation when products are created, updated, or deleted.
+	 * Also invalidates variation caches for variable products.
 	 *
 	 * @param int $product_id Product ID.
 	 */
 	public function handle_product_change( int $product_id ): void {
 		$this->invalidate_entity_cache( 'product', $product_id );
+
+		// Also invalidate variation caches if this is a variable product.
+		$product = wc_get_product( $product_id );
+		if ( $product && $product->is_type( 'variable' ) ) {
+			$variation_ids = $product->get_children();
+			foreach ( $variation_ids as $variation_id ) {
+				$this->invalidate_entity_cache( 'product', $variation_id );
+			}
+		}
+	}
+
+	/**
+	 * Handle product meta change events to invalidate cache.
+	 *
+	 * Invalidates cache when product meta keys that affect the REST API response are updated.
+	 *
+	 * @param int    $meta_id    Meta ID.
+	 * @param int    $object_id  Object ID (product ID).
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 */
+	public function handle_product_meta_change( int $meta_id, int $object_id, string $meta_key, $meta_value ): void {
+		// Only invalidate for product-related meta keys that affect the REST API response.
+		$product_meta_keys = array(
+			'_stock',
+			'_stock_status',
+			'_price',
+			'_regular_price',
+			'_sale_price',
+			'_sku',
+			'_global_unique_id',
+			'_featured',
+			'_visibility',
+			'_tax_status',
+			'_tax_class',
+			'_manage_stock',
+			'_backorders',
+			'_sold_individually',
+			'_weight',
+			'_length',
+			'_width',
+			'_height',
+			'_virtual',
+			'_downloadable',
+			'_product_image_gallery',
+			'_thumbnail_id',
+		);
+
+		if ( ! in_array( $meta_key, $product_meta_keys, true ) ) {
+			return;
+		}
+
+		// Check if this is a product.
+		if ( 'product' === get_post_type( $object_id ) ) {
+			$this->handle_product_change( $object_id );
+		}
 	}
 
 	/**

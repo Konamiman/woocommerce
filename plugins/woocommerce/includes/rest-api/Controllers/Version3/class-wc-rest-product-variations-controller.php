@@ -11,8 +11,10 @@
 use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductStockStatus;
+use Automattic\WooCommerce\Internal\Caches\RestApiObjectCache;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
 use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+use Automattic\WooCommerce\Internal\Utilities\ProductUtil;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -35,6 +37,13 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @var string
 	 */
 	protected $namespace = 'wc/v3';
+
+	/**
+	 * Product utility instance for version retrieval.
+	 *
+	 * @var ProductUtil|null
+	 */
+	private $product_util = null;
 
 	/**
 	 * Constructor.
@@ -1415,5 +1424,111 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 		}
 
 		return array_unique( array_filter( $ids ) );
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Register cache-related hooks.
+	 *
+	 * Overrides the trait method to cache ProductUtil instance and handle cache invalidation.
+	 */
+	protected function register_cache_hooks(): void {
+		// Cache the RestApiObjectCache instance for better performance.
+		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
+
+		// Cache the ProductUtil instance for version retrieval.
+		$this->product_util = wc_get_container()->get( ProductUtil::class );
+
+		// Register REST API caching hooks.
+		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
+		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
+		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 1 );
+
+		// Register cache invalidation hooks for immediate invalidation when variations change.
+		add_action( 'woocommerce_new_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
+		add_action( 'woocommerce_update_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
+		add_action( 'woocommerce_delete_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
+
+		// When variation meta changes (e.g., stock updates).
+		add_action( 'updated_post_meta', array( $this, 'handle_variation_meta_change' ), 10, 4 );
+		add_action( 'added_post_meta', array( $this, 'handle_variation_meta_change' ), 10, 4 );
+		add_action( 'deleted_post_meta', array( $this, 'handle_variation_meta_change' ), 10, 4 );
+	}
+
+	/**
+	 * Get the default entity type for caching.
+	 *
+	 * @return string|null Entity type.
+	 */
+	protected function get_default_entity_type(): ?string {
+		return 'product';
+	}
+
+	/**
+	 * Get the core version of an entity.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $entity_id   Entity ID.
+	 * @return int|null Entity version (timestamp), or null if not available.
+	 */
+	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
+		return 'product' === $entity_type ? $this->product_util->get_last_modified_date( $entity_id ) : null;
+	}
+
+	/**
+	 * Handle variation change events to invalidate cache.
+	 *
+	 * This ensures immediate cache invalidation when variations are created, updated, or deleted.
+	 * Also invalidates the parent product cache.
+	 *
+	 * @param int $variation_id Variation ID.
+	 */
+	public function handle_variation_change( int $variation_id ): void {
+		$this->invalidate_entity_cache( 'product', $variation_id );
+
+		// Also invalidate parent product cache.
+		$variation = wc_get_product( $variation_id );
+		if ( $variation && $variation->get_parent_id() ) {
+			$this->invalidate_entity_cache( 'product', $variation->get_parent_id() );
+		}
+	}
+
+	/**
+	 * Handle variation meta change events to invalidate cache.
+	 *
+	 * Invalidates cache when variation meta keys that affect the REST API response are updated.
+	 *
+	 * @param int    $meta_id    Meta ID.
+	 * @param int    $object_id  Object ID (variation ID).
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 */
+	public function handle_variation_meta_change( int $meta_id, int $object_id, string $meta_key, $meta_value ): void {
+		// Only invalidate for variation-related meta keys that affect the REST API response.
+		$variation_meta_keys = array(
+			'_stock',
+			'_stock_status',
+			'_price',
+			'_regular_price',
+			'_sale_price',
+			'_sku',
+			'_weight',
+			'_length',
+			'_width',
+			'_height',
+			'_thumbnail_id',
+		);
+
+		if ( ! in_array( $meta_key, $variation_meta_keys, true ) ) {
+			return;
+		}
+
+		// Check if this is a variation.
+		if ( 'product_variation' === get_post_type( $object_id ) ) {
+			$this->handle_variation_change( $object_id );
+		}
 	}
 }
