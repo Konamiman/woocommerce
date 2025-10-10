@@ -13,6 +13,7 @@ use Automattic\WooCommerce\Enums\ProductStockStatus;
 use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Enums\CatalogVisibility;
+use Automattic\WooCommerce\Internal\Caches\RestApiObjectCache;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
 use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Internal\Utilities\ProductUtil;
@@ -56,14 +57,19 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	/**
 	 * Register cache-related hooks.
 	 *
-	 * Overrides the parent to cache ProductUtil instance and handle cache invalidation.
+	 * Overrides the trait method to cache ProductUtil instance and handle cache invalidation.
 	 */
 	protected function register_cache_hooks(): void {
+		// Cache the RestApiObjectCache instance for better performance.
+		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
+
 		// Cache the ProductUtil instance for version retrieval.
 		$this->product_util = wc_get_container()->get( ProductUtil::class );
 
-		// Call parent to set up caching hooks.
-		parent::register_cache_hooks();
+		// Register REST API caching hooks.
+		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
+		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
+		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 2 );
 
 		// Register cache invalidation hooks for immediate invalidation when products change.
 		add_action( 'woocommerce_new_product', array( $this, 'handle_product_change' ), 10, 1 );
