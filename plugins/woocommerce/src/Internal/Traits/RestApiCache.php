@@ -145,7 +145,7 @@ trait RestApiCache {
 	/**
 	 * Get request UID information for caching.
 	 *
-	 * Override this method in classes to enable caching.
+	 * Override this method in classes to provide entity_type or customize the request_hash.
 	 * Return null to skip caching for this request.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -156,8 +156,14 @@ trait RestApiCache {
 			return null;
 		}
 
-		// By default, return null - classes must override this.
-		return null;
+		// Generate hash from request route and query string.
+		$route        = $request->get_route();
+		$query_params = $request->get_query_params();
+		$request_hash = md5( $route . wp_json_encode( $query_params ) );
+
+		return array(
+			'request_hash' => $request_hash,
+		);
 	}
 
 	/**
