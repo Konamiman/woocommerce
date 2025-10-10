@@ -1397,24 +1397,20 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 		if ( isset( $data[0] ) ) {
 			// Collection response
 			foreach ( $data as $item ) {
-				if ( isset( $item['id'] ) ) {
-					$ids[] = $item['id'];
+				$ids[] = $item['id'];
 
-					// Also track parent product ID for cache invalidation.
-					if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
-						$ids[] = $item['parent_id'];
-					}
+				// Also track parent product ID for cache invalidation.
+				if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
+					$ids[] = $item['parent_id'];
 				}
 			}
 		} else {
 			// Single variation response
-			if ( isset( $data['id'] ) ) {
-				$ids[] = $data['id'];
+			$ids[] = $data['id'];
 
-				// Also track parent product ID.
-				if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
-					$ids[] = $data['parent_id'];
-				}
+			// Also track parent product ID.
+			if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
+				$ids[] = $data['parent_id'];
 			}
 		}
 

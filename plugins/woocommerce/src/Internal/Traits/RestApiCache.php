@@ -175,7 +175,7 @@ trait RestApiCache {
 	/**
 	 * Extract entity IDs from response data.
 	 *
-	 * Override in classes if your entity structure is different.
+	 * Assumes entities have an 'id' field. Override if your entity structure is different.
 	 *
 	 * @param array $data Response data.
 	 * @return array Array of entity IDs.
@@ -187,15 +187,11 @@ trait RestApiCache {
 		if ( isset( $data[0] ) ) {
 			// Collection - extract IDs from each item.
 			foreach ( $data as $item ) {
-				if ( isset( $item['id'] ) ) {
-					$ids[] = $item['id'];
-				}
+				$ids[] = $item['id'];
 			}
 		} else {
 			// Single item.
-			if ( isset( $data['id'] ) ) {
-				$ids[] = $data['id'];
-			}
+			$ids[] = $data['id'];
 		}
 
 		return array_unique( array_filter( $ids ) );
