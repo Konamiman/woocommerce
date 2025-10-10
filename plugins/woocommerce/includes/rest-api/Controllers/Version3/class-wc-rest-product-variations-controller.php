@@ -11,7 +11,6 @@
 use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductStockStatus;
-use Automattic\WooCommerce\Internal\Caches\RestApiObjectCache;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
 use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Internal\Utilities\ProductUtil;

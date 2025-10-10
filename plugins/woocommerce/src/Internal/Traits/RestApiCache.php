@@ -8,7 +8,6 @@
 
 namespace Automattic\WooCommerce\Internal\Traits;
 
-use Automattic\WooCommerce\Internal\Caches\RestApiObjectCache;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -26,24 +25,14 @@ use WP_REST_Server;
 trait RestApiCache {
 
 	/**
-	 * Cache instance.
-	 *
-	 * @var RestApiObjectCache|null
-	 */
-	private $cache_instance = null;
-
-	/**
 	 * Register cache-related hooks.
 	 *
 	 * Call this from the controller's constructor or init method.
 	 */
 	protected function register_cache_hooks(): void {
-		// Get and store the cache instance once for better performance.
-		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
-
 		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
-		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 2 );
+		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 1 );
 	}
 
 	/**
@@ -374,7 +363,7 @@ trait RestApiCache {
 		$expiration_time = $cached['created_at'] + $this->get_cache_ttl();
 		if ( $current_time >= $expiration_time ) {
 			// Cache expired - delete and continue to normal processing.
-			$this->cache_instance->remove( $cache_id );
+			delete_transient( $transient_key );
 			return null;
 		}
 
@@ -383,7 +372,7 @@ trait RestApiCache {
 
 		if ( $cached['hooks_hash'] !== $current_hash ) {
 			// Hooks have changed - invalidate cache.
-			$this->cache_instance->remove( $cache_id );
+			delete_transient( $transient_key );
 			return null;
 		}
 
@@ -578,6 +567,27 @@ trait RestApiCache {
 	 * This removes all cached REST API responses.
 	 */
 	public function flush_all_caches(): void {
-		$this->cache_instance->flush();
+		global $wpdb;
+
+		// Delete all REST API cache transients.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_wc_rest_api_cache_' ) . '%'
+			)
+		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_timeout_wc_rest_api_cache_' ) . '%'
+			)
+		);
+	}
+}
+_wc_rest_api_cache_' ) . '%'
+			)
+		);
 	}
 }
