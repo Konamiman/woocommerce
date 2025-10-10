@@ -354,8 +354,19 @@ trait RestApiCache {
 			return null;
 		}
 
-		// Validate entity versions (will be added later - for now, skip validation).
-		// TODO: Add entity version validation here.
+		// Validate entity versions - check if any cached entities have been modified.
+		if ( ! empty( $cached['entity_versions'] ) ) {
+			foreach ( $cached['entity_versions'] as $entity_id => $cached_version ) {
+				$current_version = $this->get_entity_version( $entity_type, $entity_id );
+				
+				// If current version is null or doesn't match cached version, invalidate cache.
+				if ( null === $current_version || $current_version !== $cached_version ) {
+					// Entity has been modified - invalidate cache.
+					$this->cache_instance->remove( $cache_id );
+					return null;
+				}
+			}
+		}
 
 		// Cache is valid - check ETag.
 		$request_etag = $request->get_header( 'if_none_match' );
