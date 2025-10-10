@@ -12,6 +12,7 @@ use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductStockStatus;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -26,6 +27,7 @@ use Automattic\Jetpack\Constants;
  */
 class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V2_Controller {
 	use CogsAwareRestControllerTrait;
+	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.
@@ -33,6 +35,14 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @var string
 	 */
 	protected $namespace = 'wc/v3';
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		parent::__construct();
+		$this->register_cache_hooks();
+	}
 
 	/**
 	 * Product statuses to exclude from the query.
@@ -1313,5 +1323,103 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 		}
 
 		return $where;
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Get cache key information for the request.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array|null Cache key info or null to skip caching.
+	 */
+	protected function get_cache_key_info( $request ) {
+		$matched_route = $this->get_matched_route( $request );
+
+		if ( ! $matched_route ) {
+			return null;
+		}
+
+		// Generate hash from query params for cache key differentiation.
+		$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+
+		switch ( $matched_route ) {
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
+				// Single variation endpoint.
+				$variation_id = $request->get_param( 'id' );
+				return array(
+					'key'       => 'wc_rest_variation_' . $variation_id . '_' . $query_hash,
+					'entity_id' => $variation_id,
+				);
+
+			case '/wc/v3/' . $this->rest_base . '/generate':
+				// Generate endpoint - skip caching (modifies data).
+				return null;
+
+			case '/wc/v3/' . $this->rest_base:
+				// Variations collection endpoint.
+				$product_id = $request->get_param( 'product_id' );
+				return array(
+					'key' => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
+				);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get filter names to include in cache hash.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array Filter names.
+	 */
+	protected function get_cache_hash_filters( $request ) {
+		return array(
+			'woocommerce_rest_prepare_product_variation_object',
+			'rest_prepare_product_variation',
+		);
+	}
+
+	/**
+	 * Extract variation IDs from response data.
+	 *
+	 * For variations, we need to track both the variation ID and parent product ID
+	 * for proper cache invalidation.
+	 *
+	 * @param array $data Response data.
+	 * @return array Variation and parent product IDs.
+	 */
+	protected function extract_entity_ids( $data ) {
+		$ids = array();
+
+		if ( $this->is_collection( $data ) ) {
+			// Collection response
+			foreach ( $data as $item ) {
+				$id = $this->extract_entity_id( $item );
+				if ( null !== $id ) {
+					$ids[] = $id;
+
+					// Also track parent product ID for cache invalidation.
+					if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
+						$ids[] = $item['parent_id'];
+					}
+				}
+			}
+		} else {
+			// Single variation response
+			$id = $this->extract_entity_id( $data );
+			if ( null !== $id ) {
+				$ids[] = $id;
+
+				// Also track parent product ID.
+				if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
+					$ids[] = $data['parent_id'];
+				}
+			}
+		}
+
+		return array_unique( array_filter( $ids ) );
 	}
 }
