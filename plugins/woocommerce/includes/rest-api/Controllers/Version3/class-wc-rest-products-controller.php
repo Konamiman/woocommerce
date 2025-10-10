@@ -56,7 +56,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	/**
 	 * Register cache-related hooks.
 	 *
-	 * Overrides the parent to cache ProductUtil instance.
+	 * Overrides the parent to cache ProductUtil instance and handle cache invalidation.
 	 */
 	protected function register_cache_hooks(): void {
 		// Cache the ProductUtil instance for version retrieval.
@@ -64,6 +64,13 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 
 		// Call parent to set up caching hooks.
 		parent::register_cache_hooks();
+
+		// Register cache invalidation hooks for immediate invalidation when products change.
+		add_action( 'woocommerce_new_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_update_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_delete_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_trash_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_untrash_product', array( $this, 'handle_product_change' ), 10, 1 );
 	}
 
 	/**
@@ -84,6 +91,17 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 */
 	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
 		return 'product' === $entity_type ? $this->product_util->get_last_modified_date( $entity_id ) : null;
+	}
+
+	/**
+	 * Handle product change events to invalidate cache.
+	 *
+	 * This ensures immediate cache invalidation when products are created, updated, or deleted.
+	 *
+	 * @param int $product_id Product ID.
+	 */
+	public function handle_product_change( int $product_id ): void {
+		$this->invalidate_entity_cache( 'product', $product_id );
 	}
 
 	/**

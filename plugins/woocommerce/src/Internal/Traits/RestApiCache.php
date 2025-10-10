@@ -135,8 +135,8 @@ trait RestApiCache {
 		if ( false === $version ) {
 			$version = $this->get_entity_version_core( $entity_type, $entity_id );
 			if ( null !== $version ) {
-				// Store with long expiration (30 days).
-				set_transient( $transient_key, $version, 30 * DAY_IN_SECONDS );
+				// Store with shorter expiration (1 hour) to ensure fresher data.
+				set_transient( $transient_key, $version, HOUR_IN_SECONDS );
 			}
 		}
 
@@ -500,17 +500,19 @@ trait RestApiCache {
 	/**
 	 * Invalidate cache for an entity.
 	 *
-	 * NOTE: This method is not required if get_entity_version_core() is properly implemented
-	 * to return the actual entity version from the database (e.g., post_modified timestamp).
-	 * In that case, cache invalidation happens automatically when entity versions change.
+	 * This method should be called when an entity changes to ensure immediate cache invalidation.
+	 * While entity versioning provides automatic invalidation through get_entity_version_core(),
+	 * the entity version is cached in a transient (1 hour TTL) for performance. This means
+	 * there could be a delay before the new version is detected.
 	 *
-	 * This method exists as a fallback for explicit cache invalidation, useful when:
-	 * - Entity versioning is not implemented or not reliable
-	 * - You need to force invalidation for other reasons
+	 * Call this method explicitly in these scenarios:
+	 * - When you can't afford stale cached data (e.g., critical business operations)
+	 * - When handling entity update/delete events in your controller
+	 * - When entity versioning is not implemented or reliable
 	 * - Testing or debugging cache behavior
 	 *
-	 * Deletes the entity version transient, which will cause all cached responses
-	 * containing this entity to be invalidated on next retrieval.
+	 * This deletes the entity version transient, causing all cached responses containing
+	 * this entity to be invalidated on next retrieval.
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param int    $entity_id   Entity ID.
