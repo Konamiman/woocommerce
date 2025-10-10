@@ -2185,9 +2185,8 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 				// Single product endpoint.
 				$product_id = $request->get_param( 'id' );
 				return array(
-					'is_collection' => false,
-					'key'           => 'wc_rest_product_' . $product_id . '_' . $query_hash,
-					'entity_id'     => $product_id,
+					'key'       => 'wc_rest_product_' . $product_id . '_' . $query_hash,
+					'entity_id' => $product_id,
 				);
 
 			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)/duplicate':
@@ -2198,8 +2197,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 			case '/wc/v3/' . $this->rest_base . '/suggested-products':
 				// Collection endpoints.
 				return array(
-					'is_collection' => true,
-					'key'           => 'wc_rest_products_collection_' . md5( $matched_route . $query_hash ),
+					'key' => 'wc_rest_products_collection_' . md5( $matched_route . $query_hash ),
 				);
 		}
 

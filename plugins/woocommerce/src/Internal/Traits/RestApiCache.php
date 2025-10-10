@@ -77,7 +77,7 @@ trait RestApiCache {
 	 * Return null to skip caching for this request.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return array|null Array with 'is_collection' (bool) and 'key' (string), or null to skip caching.
+	 * @return array|null Array with 'key' (string) and optional 'entity_id' (int), or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
 		return null; // Default: no caching.
@@ -448,7 +448,7 @@ trait RestApiCache {
 		set_transient( $cache_info['key'], $cache_data, $this->get_cache_ttl() );
 
 		// Build reverse index for cache invalidation.
-		if ( ! empty( $cache_info['is_collection'] ) ) {
+		if ( $this->is_collection( $data ) ) {
 			// For collections, track all entity IDs in the response.
 			foreach ( $entity_ids as $entity_id ) {
 				$this->register_collection_cache_for_entity( $entity_id, $cache_info['key'] );

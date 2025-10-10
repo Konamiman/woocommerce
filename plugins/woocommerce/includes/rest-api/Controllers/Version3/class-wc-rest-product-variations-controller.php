@@ -1350,9 +1350,8 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 				// Single variation endpoint.
 				$variation_id = $request->get_param( 'id' );
 				return array(
-					'is_collection' => false,
-					'key'           => 'wc_rest_variation_' . $variation_id . '_' . $query_hash,
-					'entity_id'     => $variation_id,
+					'key'       => 'wc_rest_variation_' . $variation_id . '_' . $query_hash,
+					'entity_id' => $variation_id,
 				);
 
 			case '/wc/v3/' . $this->rest_base . '/generate':
@@ -1363,8 +1362,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 				// Variations collection endpoint.
 				$product_id = $request->get_param( 'product_id' );
 				return array(
-					'is_collection' => true,
-					'key'           => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
+					'key' => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
 				);
 		}
 

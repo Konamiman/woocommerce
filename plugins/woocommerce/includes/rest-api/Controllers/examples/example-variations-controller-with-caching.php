@@ -31,9 +31,8 @@ class Example_WC_REST_Product_Variations_Controller extends WC_REST_Product_Vari
 		// Single variation: /wc/v3/products/{product_id}/variations/{id}
 		if ( preg_match( '#^/wc/v3/products/\d+/variations/(\d+)$#', $route, $matches ) ) {
 			return array(
-				'is_collection' => false,
-				'key'           => 'wc_rest_variation_' . $matches[1],
-				'id'            => (int) $matches[1],
+				'key'       => 'wc_rest_variation_' . $matches[1],
+				'entity_id' => (int) $matches[1],
 			);
 		}
 
@@ -41,8 +40,7 @@ class Example_WC_REST_Product_Variations_Controller extends WC_REST_Product_Vari
 		if ( preg_match( '#^/wc/v3/products/(\d+)/variations$#', $route, $matches ) ) {
 			$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
 			return array(
-				'is_collection' => true,
-				'key'           => 'wc_rest_variations_collection_' . $matches[1] . '_' . $query_hash,
+				'key' => 'wc_rest_variations_collection_' . $matches[1] . '_' . $query_hash,
 			);
 		}
 
