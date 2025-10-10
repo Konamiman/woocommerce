@@ -60,16 +60,11 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * Overrides the trait method to cache ProductUtil instance and handle cache invalidation.
 	 */
 	protected function register_cache_hooks(): void {
-		// Cache the RestApiObjectCache instance for better performance.
-		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
-
 		// Cache the ProductUtil instance for version retrieval.
 		$this->product_util = wc_get_container()->get( ProductUtil::class );
 
-		// Register REST API caching hooks.
-		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
-		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
-		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 1 );
+		// Call parent to set up base caching hooks.
+		parent::register_cache_hooks();
 
 		// Register cache invalidation hooks for immediate invalidation when products change.
 		add_action( 'woocommerce_new_product', array( $this, 'handle_product_change' ), 10, 1 );
@@ -77,11 +72,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		add_action( 'woocommerce_delete_product', array( $this, 'handle_product_change' ), 10, 1 );
 		add_action( 'woocommerce_trash_product', array( $this, 'handle_product_change' ), 10, 1 );
 		add_action( 'woocommerce_untrash_product', array( $this, 'handle_product_change' ), 10, 1 );
-
-		// When product meta changes (e.g., stock updates).
-		add_action( 'updated_post_meta', array( $this, 'handle_product_meta_change' ), 10, 4 );
-		add_action( 'added_post_meta', array( $this, 'handle_product_meta_change' ), 10, 4 );
-		add_action( 'deleted_post_meta', array( $this, 'handle_product_meta_change' ), 10, 4 );
 	}
 
 	/**
@@ -2320,6 +2310,13 @@ merce_rest_product_object_query',
 		if ( isset( $data['related_ids'] ) ) {
 			$clean_data = $data;
 			unset( $clean_data['related_ids'] );
+			return $clean_data;
+		}
+
+		return $data;
+	}
+}
+lated_ids'] );
 			return $clean_data;
 		}
 

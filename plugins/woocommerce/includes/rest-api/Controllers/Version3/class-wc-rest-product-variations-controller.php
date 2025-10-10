@@ -1436,26 +1436,16 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * Overrides the trait method to cache ProductUtil instance and handle cache invalidation.
 	 */
 	protected function register_cache_hooks(): void {
-		// Cache the RestApiObjectCache instance for better performance.
-		$this->cache_instance = wc_get_container()->get( RestApiObjectCache::class );
-
 		// Cache the ProductUtil instance for version retrieval.
 		$this->product_util = wc_get_container()->get( ProductUtil::class );
 
-		// Register REST API caching hooks.
-		add_filter( 'rest_pre_dispatch', array( $this, 'handle_rest_pre_dispatch' ), 10, 3 );
-		add_filter( 'rest_post_dispatch', array( $this, 'handle_rest_post_dispatch' ), 10, 3 );
-		add_filter( 'rest_send_nocache_headers', array( $this, 'handle_rest_send_nocache_headers' ), 10, 1 );
+		// Call parent to set up base caching hooks.
+		parent::register_cache_hooks();
 
 		// Register cache invalidation hooks for immediate invalidation when variations change.
 		add_action( 'woocommerce_new_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
 		add_action( 'woocommerce_update_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
 		add_action( 'woocommerce_delete_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
-
-		// When variation meta changes (e.g., stock updates).
-		add_action( 'updated_post_meta', array( $this, 'handle_variation_meta_change' ), 10, 4 );
-		add_action( 'added_post_meta', array( $this, 'handle_variation_meta_change' ), 10, 4 );
-		add_action( 'deleted_post_meta', array( $this, 'handle_variation_meta_change' ), 10, 4 );
 	}
 
 	/**
