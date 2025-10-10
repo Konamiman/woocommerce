@@ -163,7 +163,7 @@ class CustomEntityController extends RestApiControllerBase {
 	}
 
 	// Note: extract_entity_ids() is provided by the trait.
-	// Note: remove_non_deterministic_fields() - override if needed.
+	// Note: get_data_for_etag() - override if needed to exclude non-deterministic fields.
 }
 
 /**
