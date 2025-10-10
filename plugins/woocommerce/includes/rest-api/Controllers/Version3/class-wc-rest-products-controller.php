@@ -15,6 +15,7 @@ use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Enums\CatalogVisibility;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
 use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+use Automattic\WooCommerce\Internal\Utilities\ProductUtil;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -38,11 +39,55 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	protected $namespace = 'wc/v3';
 
 	/**
+	 * Product utility instance for version retrieval.
+	 *
+	 * @var ProductUtil|null
+	 */
+	private $product_util = null;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
 		$this->register_cache_hooks();
+	}
+
+	/**
+	 * Register cache-related hooks.
+	 *
+	 * Overrides the parent to cache ProductUtil instance.
+	 */
+	protected function register_cache_hooks() {
+		// Cache the ProductUtil instance for version retrieval.
+		$this->product_util = wc_get_container()->get( ProductUtil::class );
+
+		// Call parent to set up caching hooks.
+		parent::register_cache_hooks();
+	}
+
+	/**
+	 * Get the default entity type for caching.
+	 *
+	 * @return string Entity type.
+	 */
+	protected function get_default_entity_type() {
+		return 'product';
+	}
+
+	/**
+	 * Get the core version of an entity.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $entity_id   Entity ID.
+	 * @return int|null Entity version (timestamp), or null if not available.
+	 */
+	protected function get_entity_version_core( $entity_type, $entity_id ) {
+		if ( 'product' !== $entity_type ) {
+			return null;
+		}
+
+		return $this->product_util->get_last_modified_version( $entity_id );
 	}
 
 	/**
