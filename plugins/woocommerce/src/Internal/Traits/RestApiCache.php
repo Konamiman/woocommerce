@@ -284,8 +284,8 @@ trait RestApiCache {
 			return null;
 		}
 
-		// Only handle GET requests for this controller's endpoints.
-		if ( $result !== null || $request->get_method() !== 'GET' ) {
+		// Skip if another handler already returned a result.
+		if ( $result !== null ) {
 			return $result;
 		}
 
@@ -410,8 +410,8 @@ trait RestApiCache {
 			return $response;
 		}
 
-		// Only handle GET requests that succeeded.
-		if ( $request->get_method() !== 'GET' || $response->get_status() !== 200 ) {
+		// Only handle successful requests.
+		if ( $response->get_status() !== 200 ) {
 			return $response;
 		}
 
