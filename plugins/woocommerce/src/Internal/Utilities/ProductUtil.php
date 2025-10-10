@@ -9,7 +9,7 @@ namespace Automattic\WooCommerce\Internal\Utilities;
  */
 class ProductUtil {
 	/**
-	 * Get the last modified version for a product.
+	 * Get the last modified date for a product.
 	 *
 	 * Returns a timestamp that changes whenever the product is modified.
 	 * Falls back to creation date if modification date isn't available.
@@ -18,7 +18,7 @@ class ProductUtil {
 	 * @param int $product_id Product ID.
 	 * @return int|null Timestamp of last modification (or creation), or null if product doesn't exist.
 	 */
-	public function get_last_modified_version( $product_id ) {
+	public function get_last_modified_date( int $product_id ): ?int {
 		global $wpdb;
 
 		// Check if we're using the CPT data store (the default).

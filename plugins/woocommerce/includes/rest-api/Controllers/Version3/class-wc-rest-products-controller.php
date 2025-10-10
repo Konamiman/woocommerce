@@ -87,7 +87,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 			return null;
 		}
 
-		return $this->product_util->get_last_modified_version( $entity_id );
+		return $this->product_util->get_last_modified_date( $entity_id );
 	}
 
 	/**
