@@ -129,14 +129,32 @@ trait RestApiCache {
 	 * @return int|null Entity version, or null if not available.
 	 */
 	protected function get_entity_version( string $entity_type, int $entity_id ): ?int {
+		/**
+		 * Filter the TTL for entity version transients.
+		 *
+		 * Set to 0 to disable transient caching and always fetch fresh versions.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int    $ttl         TTL in seconds. Default is HOUR_IN_SECONDS (3600).
+		 * @param string $entity_type Entity type (e.g., 'product', 'variation').
+		 * @param int    $entity_id   Entity ID.
+		 * @param object $controller  Controller instance.
+		 */
+		$ttl = apply_filters( 'woocommerce_rest_api_entity_version_ttl', HOUR_IN_SECONDS, $entity_type, $entity_id, $this );
+
+		// If TTL is 0, don't use transient caching at all.
+		if ( 0 === $ttl ) {
+			return $this->get_entity_version_core( $entity_type, $entity_id );
+		}
+
 		$transient_key = 'wc_rest_api_entity_version_' . $entity_type . '_' . $entity_id;
 		$version       = get_transient( $transient_key );
 
 		if ( false === $version ) {
 			$version = $this->get_entity_version_core( $entity_type, $entity_id );
 			if ( null !== $version ) {
-				// Store with shorter expiration (1 hour) to ensure fresher data.
-				set_transient( $transient_key, $version, HOUR_IN_SECONDS );
+				set_transient( $transient_key, $version, $ttl );
 			}
 		}
 
