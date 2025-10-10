@@ -61,9 +61,9 @@ class Example_WC_REST_Products_Controller extends WC_REST_Products_V2_Controller
 		);
 	}
 
-	// Note: extract_entity_ids() is now provided by the base class.
-	// It uses extract_entity_id() which defaults to $entity['id'] ?? null.
-	// No need to override unless you have special ID extraction logic.
+	// Note: extract_entity_ids() is now provided by the trait.
+	// It extracts 'id' fields from response data.
+	// Override if your entity structure is different.
 
 	/**
 	 * Remove non-deterministic fields from data.
@@ -72,7 +72,7 @@ class Example_WC_REST_Products_Controller extends WC_REST_Products_V2_Controller
 	 * @return array Cleaned data.
 	 */
 	protected function remove_non_deterministic_fields( $data ) {
-		if ( $this->is_collection( $data ) ) {
+		if ( isset( $data[0] ) ) {
 			// Collection response
 			$clean_data = array();
 			foreach ( $data as $key => $product ) {

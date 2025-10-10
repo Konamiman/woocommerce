@@ -1394,12 +1394,11 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	protected function extract_entity_ids( $data ) {
 		$ids = array();
 
-		if ( $this->is_collection( $data ) ) {
+		if ( isset( $data[0] ) ) {
 			// Collection response
 			foreach ( $data as $item ) {
-				$id = $this->extract_entity_id( $item );
-				if ( null !== $id ) {
-					$ids[] = $id;
+				if ( isset( $item['id'] ) ) {
+					$ids[] = $item['id'];
 
 					// Also track parent product ID for cache invalidation.
 					if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
@@ -1409,9 +1408,8 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 			}
 		} else {
 			// Single variation response
-			$id = $this->extract_entity_id( $data );
-			if ( null !== $id ) {
-				$ids[] = $id;
+			if ( isset( $data['id'] ) ) {
+				$ids[] = $data['id'];
 
 				// Also track parent product ID.
 				if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {

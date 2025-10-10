@@ -2225,7 +2225,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @return array Cleaned data.
 	 */
 	protected function remove_non_deterministic_fields( $data ) {
-		if ( $this->is_collection( $data ) ) {
+		if ( isset( $data[0] ) ) {
 			// Collection response - remove related_ids from each product.
 			$clean_data = array();
 			foreach ( $data as $key => $product ) {

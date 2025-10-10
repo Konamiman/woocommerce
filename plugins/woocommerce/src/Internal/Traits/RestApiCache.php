@@ -173,35 +173,9 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Check if response data is a collection.
-	 *
-	 * Override in classes if you need custom collection detection logic.
-	 *
-	 * @param array $data Response data.
-	 * @return bool True if data represents a collection, false for single item.
-	 */
-	protected function is_collection( $data ) {
-		// Collections are indexed arrays with numeric keys starting at 0.
-		// Single items are associative arrays with string keys.
-		return isset( $data[0] );
-	}
-
-	/**
-	 * Extract entity ID from a single entity array.
-	 *
-	 * Override in classes if your entities use a different ID field.
-	 *
-	 * @param array $entity Single entity data.
-	 * @return int|null Entity ID or null if not found.
-	 */
-	protected function extract_entity_id( $entity ) {
-		return $entity['id'] ?? null;
-	}
-
-	/**
 	 * Extract entity IDs from response data.
 	 *
-	 * Most classes won't need to override this - override extract_entity_id() instead.
+	 * Override in classes if your entity structure is different.
 	 *
 	 * @param array $data Response data.
 	 * @return array Array of entity IDs.
@@ -209,19 +183,18 @@ trait RestApiCache {
 	protected function extract_entity_ids( $data ) {
 		$ids = array();
 
-		if ( $this->is_collection( $data ) ) {
+		// Collections are indexed arrays with numeric keys starting at 0.
+		if ( isset( $data[0] ) ) {
 			// Collection - extract IDs from each item.
 			foreach ( $data as $item ) {
-				$id = $this->extract_entity_id( $item );
-				if ( null !== $id ) {
-					$ids[] = $id;
+				if ( isset( $item['id'] ) ) {
+					$ids[] = $item['id'];
 				}
 			}
 		} else {
 			// Single item.
-			$id = $this->extract_entity_id( $data );
-			if ( null !== $id ) {
-				$ids[] = $id;
+			if ( isset( $data['id'] ) ) {
+				$ids[] = $data['id'];
 			}
 		}
 
