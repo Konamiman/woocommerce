@@ -2238,12 +2238,12 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	}
 
 	/**
-	 * Remove non-deterministic fields from data for ETag generation.
+	 * Get data for ETag generation.
 	 *
 	 * @param array $data Response data.
-	 * @return array Cleaned data.
+	 * @return array Cleaned data for ETag generation.
 	 */
-	protected function remove_non_deterministic_fields( array $data ): array {
+	protected function get_data_for_etag( array $data ): array {
 		if ( isset( $data[0] ) ) {
 			// Collection response - remove related_ids from each product.
 			$clean_data = array();

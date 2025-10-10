@@ -226,15 +226,15 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Remove non-deterministic fields from data for ETag generation.
+	 * Get data for ETag generation.
 	 *
 	 * Override in classes to exclude fields that change on each request
 	 * (e.g., random recommendations, timestamps).
 	 *
 	 * @param array $data Response data.
-	 * @return array Cleaned data.
+	 * @return array Cleaned data for ETag generation.
 	 */
-	protected function remove_non_deterministic_fields( array $data ): array {
+	protected function get_data_for_etag( array $data ): array {
 		return $data; // Default: no cleaning.
 	}
 
@@ -478,8 +478,8 @@ trait RestApiCache {
 			}
 		}
 
-		// Remove non-deterministic fields for ETag generation.
-		$etag_data = $this->remove_non_deterministic_fields( $data );
+		// Get data for ETag generation (excluding non-deterministic fields).
+		$etag_data = $this->get_data_for_etag( $data );
 
 		// Generate ETag from the actual response content.
 		$etag = '"' . md5( wp_json_encode( $etag_data ) ) . '"';

@@ -66,12 +66,12 @@ class Example_WC_REST_Products_Controller extends WC_REST_Products_V2_Controller
 	// Override if your entity structure is different.
 
 	/**
-	 * Remove non-deterministic fields from data.
+	 * Get data for ETag generation.
 	 *
 	 * @param array $data Response data.
-	 * @return array Cleaned data.
+	 * @return array Cleaned data for ETag generation.
 	 */
-	protected function remove_non_deterministic_fields( $data ) {
+	protected function get_data_for_etag( $data ) {
 		if ( isset( $data[0] ) ) {
 			// Collection response
 			$clean_data = array();
