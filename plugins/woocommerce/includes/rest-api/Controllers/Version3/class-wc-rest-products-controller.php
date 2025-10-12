@@ -14,6 +14,8 @@ use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Enums\CatalogVisibility;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+use Automattic\WooCommerce\Internal\Utilities\ProductUtil;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -27,6 +29,7 @@ defined( 'ABSPATH' ) || exit;
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 
 	use CogsAwareRestControllerTrait;
+	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.
@@ -34,6 +37,41 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @var string
 	 */
 	protected $namespace = 'wc/v3';
+
+	/**
+	 * Product utility instance for version retrieval.
+	 *
+	 * @var ProductUtil|null
+	 */
+	private $product_util = null;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		parent::__construct();
+		$this->register_cache_hooks();
+	}
+
+	/**
+	 * Register cache-related hooks.
+	 *
+	 * Overrides the trait method to cache ProductUtil instance and handle cache invalidation.
+	 */
+	protected function register_cache_hooks(): void {
+		// Cache the ProductUtil instance for version retrieval.
+		$this->product_util = wc_get_container()->get( ProductUtil::class );
+
+		// Call parent to set up base caching hooks.
+		parent::register_cache_hooks();
+
+		// Register cache invalidation hooks for immediate invalidation when products change.
+		add_action( 'woocommerce_new_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_update_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_delete_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_trash_product', array( $this, 'handle_product_change' ), 10, 1 );
+		add_action( 'woocommerce_untrash_product', array( $this, 'handle_product_change' ), 10, 1 );
+	}
 
 	/**
 	 * The value of the 'search_sku' argument if present.
@@ -2148,5 +2186,64 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		$this->processed_attachment_ids_for_request = array();
 
 		return $response;
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Get the default entity type for caching.
+	 *
+	 * @return string|null Entity type.
+	 */
+	protected function get_default_entity_type(): ?string {
+		return 'product';
+	}
+
+	/**
+	 * Get the core version of an entity.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $entity_id   Entity ID.
+	 * @return int|null Entity version (timestamp), or null if not available.
+	 */
+	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
+		return 'product' === $entity_type ? $this->product_util->get_last_modified_date( $entity_id ) : null;
+	}
+
+	/**
+	 * Handle product change events to invalidate cache.
+	 *
+	 * This ensures immediate cache invalidation when products are created, updated, or deleted.
+	 * Also invalidates variation caches for variable products.
+	 *
+	 * @param int $product_id Product ID.
+	 */
+	public function handle_product_change( int $product_id ): void {
+		$this->invalidate_entity_cache( 'product', $product_id );
+
+		// Also invalidate variation caches if this is a variable product.
+		$product = wc_get_product( $product_id );
+		if ( $product && $product->is_type( 'variable' ) ) {
+			$variation_ids = $product->get_children();
+			foreach ( $variation_ids as $variation_id ) {
+				$this->invalidate_entity_cache( 'product', $variation_id );
+			}
+		}
+	}
+
+	/**
+	 * Get filter names to include in cache hash.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array Array of filter names.
+	 */
+	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
+		return array(
+			'woocommerce_rest_prepare_product_object',
+			'rest_prepare_product',
+			'woocommerce_rest_product_object_query',
+		);
 	}
 }
