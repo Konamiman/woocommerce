@@ -242,7 +242,17 @@ trait RestApiCache {
 	 * @return int Cache TTL in seconds.
 	 */
 	protected function get_cache_ttl(): int {
-		return 5 * MINUTE_IN_SECONDS;
+		$ttl = 5 * MINUTE_IN_SECONDS;
+
+		/**
+		 * Filter the cache TTL for REST API responses.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int    $ttl        Cache TTL in seconds. Default is 5 minutes (300 seconds).
+		 * @param object $controller Controller instance.
+		 */
+		return apply_filters( 'woocommerce_rest_api_cache_ttl', $ttl, $this );
 	}
 
 	/**
