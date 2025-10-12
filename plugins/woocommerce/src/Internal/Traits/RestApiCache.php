@@ -13,14 +13,74 @@ use WP_REST_Response;
 use WP_REST_Server;
 
 /**
- * Trait for adding caching capabilities to REST API controllers.
+ * Trait for adding transient-based caching capabilities to REST API controllers.
  *
- * Usage:
+ * ## Basic Usage (Simplest Scenario)
+ *
+ * To enable caching with default behavior, only two steps are required:
+ *
  * 1. Add 'use RestApiCache;' to your controller class
- * 2. Implement required methods
- * 3. Call register_cache_hooks() in constructor or register() method
+ * 2. Call register_cache_hooks() in the constructor
+ * 3. Override get_default_entity_type() to return your entity type (e.g., 'product')
  *
- * @since   9.5.0
+ * With these minimal changes, the trait will:
+ * - Cache all GET requests for 5 minutes
+ * - Generate cache keys based on route and query parameters
+ * - Invalidate caches when entities are modified (via get_entity_version_core)
+ * - Track which hooks affect the response (if get_cache_hash_filters is overridden)
+ *
+ * Example:
+ * ```php
+ * class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
+ *     use RestApiCache;
+ *
+ *     public function __construct() {
+ *         parent::__construct();
+ *         $this->register_cache_hooks();
+ *     }
+ *
+ *     protected function get_default_entity_type(): ?string {
+ *         return 'product';
+ *     }
+ * }
+ * ```
+ *
+ * ## Methods to Override (Customization)
+ *
+ * Override these methods to customize caching behavior:
+ *
+ * **Required for caching to work:**
+ * - get_default_entity_type(): Return the entity type ('product', 'order', etc.)
+ *
+ * **Optional for advanced customization:**
+ * - get_cacheable_entity_type(): Determine if a specific request should be cached
+ * - get_entity_version_core(): Provide versioning logic (e.g., last modified timestamp)
+ * - get_cache_hash_filters(): Specify which hooks affect the response
+ * - extract_entity_ids(): Custom logic for extracting IDs from response data
+ * - get_cache_ttl(): Customize cache duration (default: 5 minutes)
+ * - get_request_uid_info(): Full control over cache key generation
+ *
+ * ## Helper Methods (Use As-Is)
+ *
+ * These methods are available for use in your overrides but typically don't need to be overridden:
+ * - get_request_route(): Get the current request route
+ * - get_matched_route(): Get the matched route pattern (useful for route-based logic)
+ * - get_entity_version(): Get entity version (with transient caching)
+ * - generate_hooks_hash(): Generate hash based on registered hooks
+ *
+ * ## Public Methods (For Cache Management)
+ *
+ * These methods can be called to manage caches:
+ * - invalidate_entity_cache(): Invalidate cache for a specific entity
+ * - flush_all_caches(): Clear all REST API caches
+ *
+ * ## Internal Methods (Do Not Override)
+ *
+ * These are used internally by WordPress REST API hooks:
+ * - handle_rest_pre_dispatch(): Checks cache before request processing
+ * - handle_rest_post_dispatch(): Stores response in cache after processing
+ *
+ * @since   10.4.0
  */
 trait RestApiCache {
 
@@ -258,12 +318,12 @@ trait RestApiCache {
 	}
 
 	/**
-	 * Generate cache hash based on request and hooks.
+	 * Generate hash based on registered hooks that affect the response.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return string Cache hash.
+	 * @return string Hooks hash.
 	 */
-	protected function generate_cache_hash( WP_REST_Request $request ): string {
+	protected function generate_hooks_hash( WP_REST_Request $request ): string {
 		global $wp_filter;
 
 		$cache_hash_data = array();
@@ -282,16 +342,16 @@ trait RestApiCache {
 		}
 
 		/**
-		 * Filter cache hash data.
+		 * Filter the hooks data used for generating the cache hash.
 		 *
 		 * @since 10.4.0
 		 *
-		 * @param array           $cache_hash_data Hash data.
+		 * @param array           $cache_hash_data Hook callbacks data used for hash generation.
 		 * @param WP_REST_Request $request         Request object.
 		 * @param object          $controller      Controller instance.
 		 */
 		$cache_hash_data = apply_filters(
-			'woocommerce_rest_api_cache_hash',
+			'woocommerce_rest_api_cache_hooks_hash_data',
 			$cache_hash_data,
 			$request,
 			$this
@@ -373,7 +433,7 @@ trait RestApiCache {
 		}
 
 		// Calculate current hooks hash to see if hooks have changed.
-		$current_hash = $this->generate_cache_hash( $request );
+		$current_hash = $this->generate_hooks_hash( $request );
 
 		if ( $cached['hooks_hash'] !== $current_hash ) {
 			// Hooks have changed - invalidate cache.
@@ -460,7 +520,7 @@ trait RestApiCache {
 		$cache_data = array(
 			'entity_type'      => $entity_type,
 			'created_at'       => time(),
-			'hooks_hash'       => $this->generate_cache_hash( $request ),
+			'hooks_hash'       => $this->generate_hooks_hash( $request ),
 			'data'             => $data,
 			'entity_versions'  => $entity_versions,
 		);
