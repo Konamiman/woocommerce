@@ -2279,39 +2279,3 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		return $data;
 	}
 }
-merce_rest_product_object_query',
-		);
-	}
-
-	/**
-	 * Get data for ETag generation.
-	 *
-	 * @param array $data Response data.
-	 * @return array Cleaned data for ETag generation.
-	 */
-	protected function get_data_for_etag( array $data ): array {
-		if ( isset( $data[0] ) ) {
-			// Collection response - remove related_ids from each product.
-			$clean_data = array();
-			foreach ( $data as $key => $product ) {
-				if ( isset( $product['related_ids'] ) ) {
-					$clean_product = $product;
-					unset( $clean_product['related_ids'] );
-					$clean_data[ $key ] = $clean_product;
-				} else {
-					$clean_data[ $key ] = $product;
-				}
-			}
-			return $clean_data;
-		}
-
-		// Single product response - remove related_ids.
-		if ( isset( $data['related_ids'] ) ) {
-			$clean_data = $data;
-			unset( $clean_data['related_ids'] );
-			return $clean_data;
-		}
-
-		return $data;
-	}
-}
