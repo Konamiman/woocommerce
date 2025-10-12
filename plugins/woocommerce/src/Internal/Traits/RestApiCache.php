@@ -239,9 +239,10 @@ trait RestApiCache {
 	 *
 	 * Override in classes to customize cache duration.
 	 *
+	 * @param WP_REST_Request $request Request object.
 	 * @return int Cache TTL in seconds.
 	 */
-	protected function get_cache_ttl(): int {
+	protected function get_cache_ttl( WP_REST_Request $request ): int {
 		$ttl = 5 * MINUTE_IN_SECONDS;
 
 		/**
@@ -249,10 +250,11 @@ trait RestApiCache {
 		 *
 		 * @since 10.4.0
 		 *
-		 * @param int    $ttl        Cache TTL in seconds. Default is 5 minutes (300 seconds).
-		 * @param object $controller Controller instance.
+		 * @param int             $ttl        Cache TTL in seconds. Default is 5 minutes (300 seconds).
+		 * @param WP_REST_Request $request    Request object.
+		 * @param object          $controller Controller instance.
 		 */
-		return apply_filters( 'woocommerce_rest_api_cache_ttl', $ttl, $this );
+		return apply_filters( 'woocommerce_rest_api_cache_ttl', $ttl, $request, $this );
 	}
 
 	/**
@@ -469,7 +471,7 @@ trait RestApiCache {
 
 		// Cache the response using transient.
 		$transient_key = 'wc_rest_api_cache_' . $cache_id;
-		set_transient( $transient_key, $cache_data, $this->get_cache_ttl() );
+		set_transient( $transient_key, $cache_data, $this->get_cache_ttl( $request ) );
 
 		// Remove UID info and controller class so other controllers know this request was handled.
 		$request->set_param( '_cache_uid_info', null );
