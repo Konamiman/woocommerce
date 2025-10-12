@@ -401,7 +401,7 @@ trait RestApiCache {
 			wc_doing_it_wrong(
 				__METHOD__,
 				'Request is cacheable but no entity type is provided. Override get_cacheable_entity_type to return an entity type.',
-				'9.5.0'
+				'10.4.0'
 			);
 			return null;
 		}
