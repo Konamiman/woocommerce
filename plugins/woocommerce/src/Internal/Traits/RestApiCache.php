@@ -595,8 +595,3 @@ trait RestApiCache {
 		);
 	}
 }
-_wc_rest_api_cache_' ) . '%'
-			)
-		);
-	}
-}
