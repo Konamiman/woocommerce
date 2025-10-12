@@ -487,8 +487,7 @@ trait RestApiCache {
 		}
 
 		// Verify this is the same controller that handled pre-dispatch.
-		$caching_controller = $request->get_param( '_caching_controller_class' );
-		if ( $caching_controller !== get_class( $this ) ) {
+		if ( ! isset( $uid_info['controller_class'] ) || $uid_info['controller_class'] !== get_class( $this ) ) {
 			return $response;
 		}
 
