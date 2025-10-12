@@ -1362,27 +1362,21 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @return array Variation and parent product IDs.
 	 */
 	protected function extract_entity_ids( array $data ): array {
-		$ids = array();
+		// Get variation IDs using parent method.
+		$ids = parent::extract_entity_ids( $data );
 
-		// Collections are indexed arrays with numeric keys starting at 0.
-		if ( isset( $data[0] ) ) {
-			// Collection response
-			foreach ( $data as $item ) {
-				$ids[] = $item['id'];
+		// Add parent product ID - all variations in a response belong to the same parent.
+		$parent_id = null;
+		if ( isset( $data[0]['parent_id'] ) ) {
+			// Collection response - get parent from first item.
+			$parent_id = $data[0]['parent_id'];
+		} elseif ( isset( $data['parent_id'] ) ) {
+			// Single variation response.
+			$parent_id = $data['parent_id'];
+		}
 
-				// Also track parent product ID for cache invalidation.
-				if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
-					$ids[] = $item['parent_id'];
-				}
-			}
-		} else {
-			// Single variation response
-			$ids[] = $data['id'];
-
-			// Also track parent product ID.
-			if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
-				$ids[] = $data['parent_id'];
-			}
+		if ( $parent_id && $parent_id > 0 ) {
+			$ids[] = $parent_id;
 		}
 
 		return array_unique( array_filter( $ids ) );
