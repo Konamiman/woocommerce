@@ -2315,10 +2315,3 @@ merce_rest_product_object_query',
 		return $data;
 	}
 }
-lated_ids'] );
-			return $clean_data;
-		}
-
-		return $data;
-	}
-}
