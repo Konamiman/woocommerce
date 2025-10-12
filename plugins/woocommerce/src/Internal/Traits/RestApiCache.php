@@ -346,11 +346,10 @@ trait RestApiCache {
 			return null;
 		}
 
-		// Store UID info for post-dispatch.
+		// Store UID info for post-dispatch, including controller class to ensure
+		// the same controller handles both pre and post dispatch.
+		$uid_info['controller_class'] = get_class( $this );
 		$request->set_param( '_cache_uid_info', $uid_info );
-		
-		// Store controller class to ensure the same controller handles both pre and post dispatch.
-		$request->set_param( '_caching_controller_class', get_class( $this ) );
 
 		// Build cache ID from entity type and request hash.
 		$cache_id = $entity_type . '-' . $uid_info['request_hash'];
@@ -473,9 +472,8 @@ trait RestApiCache {
 		$transient_key = 'wc_rest_api_cache_' . $cache_id;
 		set_transient( $transient_key, $cache_data, $this->get_cache_ttl( $request ) );
 
-		// Remove UID info and controller class so other controllers know this request was handled.
+		// Remove UID info so other controllers know this request was handled.
 		$request->set_param( '_cache_uid_info', null );
-		$request->set_param( '_caching_controller_class', null );
 
 		return $response;
 	}
