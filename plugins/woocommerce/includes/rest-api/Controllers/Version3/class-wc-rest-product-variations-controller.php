@@ -1383,7 +1383,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @param WP_REST_Request $request Request object.
 	 * @return array Array of filter names.
 	 */
-	protected function get_cache_hash_filters( $request ) {
+	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
 		return array(
 			'woocommerce_rest_prepare_product_variation_object',
 			'rest_prepare_product_variation',
@@ -1399,7 +1399,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @param array $data Response data.
 	 * @return array Variation and parent product IDs.
 	 */
-	protected function extract_entity_ids( $data ) {
+	protected function extract_entity_ids( array $data ): array {
 		$ids = array();
 
 		if ( isset( $data[0] ) ) {
