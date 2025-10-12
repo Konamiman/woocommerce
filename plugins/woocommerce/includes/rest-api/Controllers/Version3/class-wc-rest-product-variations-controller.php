@@ -1341,7 +1341,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * Get cache key information for the request.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return array|null Cache key info or null to skip caching.
+	 * @return array|null Array with 'is_collection' (bool) and 'key' (string), or null to skip caching.
 	 */
 	protected function get_cache_key_info( $request ) {
 		$matched_route = $this->get_matched_route( $request );
@@ -1381,7 +1381,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * Get filter names to include in cache hash.
 	 *
 	 * @param WP_REST_Request $request Request object.
-	 * @return array Filter names.
+	 * @return array Array of filter names.
 	 */
 	protected function get_cache_hash_filters( $request ) {
 		return array(
