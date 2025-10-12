@@ -425,7 +425,7 @@ trait RestApiCache {
 
 		// Check if cache has expired based on creation time.
 		$current_time    = time();
-		$expiration_time = $cached['created_at'] + $this->get_cache_ttl();
+		$expiration_time = $cached['created_at'] + $this->get_cache_ttl( $request );
 		if ( $current_time >= $expiration_time ) {
 			// Cache expired - delete and continue to normal processing.
 			delete_transient( $transient_key );
