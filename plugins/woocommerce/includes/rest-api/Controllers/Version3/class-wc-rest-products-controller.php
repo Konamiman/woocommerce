@@ -2188,10 +2188,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		return $response;
 	}
 
-	/* -------------------------------------------------------------------------
-	 * REST API Caching Implementation
-	 * ------------------------------------------------------------------------- */
-
 	/**
 	 * Get the default entity type for caching.
 	 *
@@ -2202,21 +2198,18 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	}
 
 	/**
-	 * Get the core version of an entity.
+	 * Get the current version of a product.
 	 *
 	 * @param string $entity_type Entity type.
 	 * @param int    $entity_id   Entity ID.
-	 * @return int|null Entity version (timestamp), or null if not available.
+	 * @return int|string|null Entity version (timestamp), or null if not available.
 	 */
-	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
+	protected function get_entity_version_core( string $entity_type, int $entity_id ) {
 		return 'product' === $entity_type ? $this->product_util->get_last_modified_date( $entity_id ) : null;
 	}
 
 	/**
-	 * Handle product change events to invalidate cache.
-	 *
-	 * This ensures immediate cache invalidation when products are created, updated, or deleted.
-	 * Also invalidates variation caches for variable products.
+	 * Handle product change events to invalidate the related REST API responses cached.
 	 *
 	 * @param int $product_id Product ID.
 	 */
@@ -2234,7 +2227,7 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	}
 
 	/**
-	 * Get filter names to include in cache hash.
+	 * Get the names of the filters that can modify the endpoint responses.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return array Array of filter names.
@@ -2242,7 +2235,6 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
 		return array(
 			'woocommerce_rest_prepare_product_object',
-			'rest_prepare_product',
 			'woocommerce_rest_product_object_query',
 		);
 	}

@@ -1265,7 +1265,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 				continue;
 			}
 			$existing_variation->delete( true );
-			$deleted_count ++;
+			++$deleted_count;
 		}
 
 		return $deleted_count;
@@ -1326,10 +1326,6 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 		return $where;
 	}
 
-	/* -------------------------------------------------------------------------
-	 * REST API Caching Implementation
-	 * ------------------------------------------------------------------------- */
-
 	/**
 	 * Get the default entity type for caching.
 	 *
@@ -1340,7 +1336,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	}
 
 	/**
-	 * Get filter names to include in cache hash.
+	 * Get the names of the filters that can modify the endpoint responses.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return array Array of filter names.
@@ -1348,7 +1344,7 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
 		return array(
 			'woocommerce_rest_prepare_product_variation_object',
-			'rest_prepare_product_variation',
+			'woocommerce_rest_product_object_query',
 		);
 	}
 
@@ -1362,20 +1358,16 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @return array Variation and parent product IDs.
 	 */
 	protected function extract_entity_ids( array $data ): array {
-		// Get variation IDs using parent method.
 		$ids = parent::extract_entity_ids( $data );
 
-		// Add parent product ID - all variations in a response belong to the same parent.
-		$parent_id = null;
+		$parent_id = 0;
 		if ( isset( $data[0]['parent_id'] ) ) {
-			// Collection response - get parent from first item.
 			$parent_id = $data[0]['parent_id'];
 		} elseif ( isset( $data['parent_id'] ) ) {
-			// Single variation response.
 			$parent_id = $data['parent_id'];
 		}
 
-		if ( $parent_id && $parent_id > 0 ) {
+		if ( 0 !== $parent_id ) {
 			$ids[] = $parent_id;
 		}
 

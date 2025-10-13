@@ -11,47 +11,36 @@ class ProductUtil {
 	/**
 	 * Get the last modified date for a product.
 	 *
-	 * Returns a timestamp that changes whenever the product is modified.
-	 * Falls back to creation date if modification date isn't available.
-	 * This is used for cache invalidation in the REST API.
-	 *
 	 * @param int $product_id Product ID.
 	 * @return int|null Timestamp of last modification (or creation), or null if product doesn't exist.
 	 */
 	public function get_last_modified_date( int $product_id ): ?int {
 		global $wpdb;
 
-		// Check if we're using the CPT data store (the default).
+		// Query the posts table directly we're using the default CPT data store (the default),
+		// otherwise fallback to retrieving the full product object.
+
 		$data_store = \WC_Data_Store::load( 'product' );
-		if ( is_a( $data_store, \WC_Product_Data_Store_CPT::class ) ) {
-			// Query the posts table directly for performance.
-			// Use COALESCE to fall back to post_date_gmt if post_modified_gmt is empty.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $data_store instanceof \WC_Product_Data_Store_CPT ) {
 			$post_date = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COALESCE(NULLIF(post_modified_gmt, '0000-00-00 00:00:00'), post_date_gmt) FROM {$wpdb->posts} WHERE ID = %d",
+					"SELECT COALESCE(NULLIF(post_modified_gmt, %s), post_date_gmt) FROM {$wpdb->posts} WHERE ID = %d",
+					'0000-00-00 00:00:00',
 					$product_id
 				)
 			);
 
-			if ( ! $post_date ) {
-				// Product doesn't exist.
-				return null;
-			}
-
-			return strtotime( $post_date );
+			return $post_date ? strtotime( $post_date ) : null;
 		}
 
-		// Fallback: Use wc_get_product for custom data stores.
 		$product = wc_get_product( $product_id );
 		if ( ! $product ) {
 			return null;
 		}
 
-		// Try modification date first, fall back to creation date.
 		$date_modified = $product->get_date_modified();
-		$date_created = $product->get_date_created();
-		
+		$date_created  = $product->get_date_created();
+
 		return $date_modified ? $date_modified->getTimestamp() : ( $date_created ? $date_created->getTimestamp() : null );
 	}
 
