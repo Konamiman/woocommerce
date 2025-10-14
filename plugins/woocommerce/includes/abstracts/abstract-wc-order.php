@@ -2604,6 +2604,33 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 	}
 
 	/**
+	 * Check if the order costs are provisional (can transition to completed status).
+	 *
+	 * @return bool True if the order costs are provisional.
+	 */
+	public function costs_are_provisional(): bool {
+		$statuses_that_can_complete = array(
+			'pending',
+			'failed',
+			'cancelled',
+			'processing',
+			'on-hold',
+		);
+		
+		$can_transition = in_array( $this->get_status(), $statuses_that_can_complete, true );
+		
+		/**
+		 * Filter to customize whether order costs are provisional.
+		 *
+		 * @since 10.3.0
+		 *
+		 * @param bool $costs_are_provisional Whether the order costs are provisional.
+		 * @param WC_Abstract_Order $order The order object.
+		 */
+		return apply_filters( 'woocommerce_order_costs_are_provisional', $can_transition, $this );
+	}
+
+	/**
 	 * Return the HTML to render the total Cost of Goods Sold for the order.
 	 *
 	 * @param array|null $wc_price_arg Arguments to be passed to wc_price, defaults to an array containing only the currency symbol.
@@ -2615,6 +2642,9 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 		}
 
 		$cogs_total_value = $this->get_cogs_total_value();
+		
+		// Base HTML for the COGS value
+		$cogs_html = wc_price( $cogs_total_value, $wc_price_arg ?? array( 'currency' => $this->get_currency() ) );
 
 		/**
 		 * Filter to customize the total Cost of Goods Sold (COGS) value HTML for a given order.
@@ -2627,7 +2657,7 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 		 */
 		return apply_filters(
 			'woocommerce_order_cogs_total_value_html',
-			wc_price( $cogs_total_value, $wc_price_arg ?? array( 'currency' => $this->get_currency() ) ),
+			$cogs_html,
 			$cogs_total_value,
 			$this
 		);
