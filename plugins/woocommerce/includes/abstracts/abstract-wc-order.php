@@ -2608,7 +2608,7 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 	 *
 	 * @return bool True if the order can transition to completed status.
 	 */
-	protected function can_transition_to_completed(): bool {
+	public function can_transition_to_completed(): bool {
 		$statuses_that_can_complete = array(
 			'pending',
 			'failed',
