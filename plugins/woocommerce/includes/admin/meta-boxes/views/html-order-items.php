@@ -300,6 +300,13 @@ if ( wc_tax_enabled() ) {
 				</td>
 			</tr>
 		</table>
+		
+		<?php if ( ! $order->has_status( 'completed' ) && $order->can_transition_to_completed() ) : ?>
+			<div style="color: #d63638; font-size: 14px; margin-top: 8px; padding: 8px 12px; background-color: #fcf0f1; border: 1px solid #f1aeb5; border-radius: 4px; display: flex; align-items: center; gap: 6px;">
+				<span class="dashicons dashicons-info" style="font-size: 16px; color: #d63638;"></span>
+				<?php esc_html_e( 'This cost value is provisional, it will be updated when the order is completed.', 'woocommerce' ); ?>
+			</div>
+		<?php endif; ?>
 	<?php endif; ?>
 
 	<div class="clear"></div>
