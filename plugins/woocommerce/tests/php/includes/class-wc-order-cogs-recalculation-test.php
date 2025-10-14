@@ -33,7 +33,9 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 		$this->assertEquals( 100.00, $initial_cogs );
 
 		// Simulate product cost change (this would happen in real scenario)
-		$product = $order->get_items()[0]->get_product();
+		$order_items = $order->get_items();
+		$this->assertNotEmpty( $order_items, 'Order should have items' );
+		$product = $order_items[0]->get_product();
 		$product->set_cogs_value( 75.00 ); // Increased cost
 		$product->save();
 
@@ -110,7 +112,9 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 		$initial_cogs = $order->get_cogs_total_value();
 
 		// Change product cost
-		$product = $order->get_items()[0]->get_product();
+		$order_items = $order->get_items();
+		$this->assertNotEmpty( $order_items, 'Order should have items' );
+		$product = $order_items[0]->get_product();
 		$product->set_cogs_value( 75.00 );
 		$product->save();
 
