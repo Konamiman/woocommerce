@@ -2604,11 +2604,11 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 	}
 
 	/**
-	 * Check if the order can transition to completed status.
+	 * Check if the order costs are provisional (can transition to completed status).
 	 *
-	 * @return bool True if the order can transition to completed status.
+	 * @return bool True if the order costs are provisional.
 	 */
-	public function can_transition_to_completed(): bool {
+	public function costs_are_provisional(): bool {
 		$statuses_that_can_complete = array(
 			'pending',
 			'failed',
@@ -2617,7 +2617,17 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 			'on-hold',
 		);
 		
-		return in_array( $this->get_status(), $statuses_that_can_complete, true );
+		$can_transition = in_array( $this->get_status(), $statuses_that_can_complete, true );
+		
+		/**
+		 * Filter to customize whether order costs are provisional.
+		 *
+		 * @since 10.3.0
+		 *
+		 * @param bool $costs_are_provisional Whether the order costs are provisional.
+		 * @param WC_Abstract_Order $order The order object.
+		 */
+		return apply_filters( 'woocommerce_order_costs_are_provisional', $can_transition, $this );
 	}
 
 	/**

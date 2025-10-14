@@ -50,7 +50,7 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 	}
 
 	/**
-	 * Test that can_transition_to_completed method works correctly
+	 * Test that costs_are_provisional method works correctly
 	 *
 	 * @testWith ["pending", true]
 	 *           ["failed", true]
@@ -61,14 +61,39 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 	 *           ["refunded", false]
 	 *           ["trash", false]
 	 */
-	public function test_can_transition_to_completed_method( string $status, bool $can_transition ) {
+	public function test_costs_are_provisional_method( string $status, bool $costs_are_provisional ) {
 		$this->enable_cogs_feature();
 
 		$order = new WC_Order();
 		$order->set_status( $status );
 		$order->save();
 
-		$this->assertEquals( $can_transition, $order->can_transition_to_completed(), "Order with {$status} status should " . ( $can_transition ? '' : 'NOT ' ) . "be able to transition to completed" );
+		$this->assertEquals( $costs_are_provisional, $order->costs_are_provisional(), "Order with {$status} status should " . ( $costs_are_provisional ? '' : 'NOT ' ) . "have provisional costs" );
+	}
+
+	/**
+	 * Test that costs_are_provisional can be customized via filter
+	 */
+	public function test_costs_are_provisional_filter() {
+		$this->enable_cogs_feature();
+
+		$order = new WC_Order();
+		$order->set_status( 'completed' );
+		$order->save();
+
+		// By default, completed orders should not have provisional costs
+		$this->assertFalse( $order->costs_are_provisional() );
+
+		// Add filter to force provisional costs for completed orders
+		add_filter( 'woocommerce_order_costs_are_provisional', function( $costs_are_provisional, $order ) {
+			return true; // Force all orders to have provisional costs
+		}, 10, 2 );
+
+		// Now it should return true due to the filter
+		$this->assertTrue( $order->costs_are_provisional() );
+
+		// Clean up
+		remove_all_filters( 'woocommerce_order_costs_are_provisional' );
 	}
 
 	/**
