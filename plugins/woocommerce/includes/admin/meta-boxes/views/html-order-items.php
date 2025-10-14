@@ -309,9 +309,8 @@ if ( wc_tax_enabled() ) {
 	</table>
 	
 	<?php if ( $cogs_is_enabled && ! $order->has_status( 'completed' ) && $order->can_transition_to_completed() ) : ?>
-		<div style="color: #d63638; font-size: 14px; margin-top: 8px; text-align: right;">
-			<span class="dashicons dashicons-info" style="font-size: 16px; color: #d63638; margin-right: 4px;"></span>
-			<?php esc_html_e( 'This cost value is provisional, it will be updated when the order is completed.', 'woocommerce' ); ?>
+		<div style="margin-top: 8px; text-align: right;">
+			<span class="description"><?php echo wc_help_tip( __( 'Definitive cost values will be calculated when the order is completed', 'woocommerce' ) ); ?> <?php esc_html_e( 'Cost values are provisional.', 'woocommerce' ); ?></span>
 		</div>
 	<?php endif; ?>
 
