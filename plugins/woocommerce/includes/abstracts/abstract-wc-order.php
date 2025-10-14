@@ -2615,6 +2615,19 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 		}
 
 		$cogs_total_value = $this->get_cogs_total_value();
+		$is_completed = $this->has_status( 'completed' );
+		
+		// Base HTML for the COGS value
+		$cogs_html = wc_price( $cogs_total_value, $wc_price_arg ?? array( 'currency' => $this->get_currency() ) );
+		
+		// Add provisional message for non-completed orders
+		if ( ! $is_completed ) {
+			$provisional_message = sprintf(
+				'<br><small style="color: #666; font-style: italic;">%s</small>',
+				__( 'This cost value is provisional, it will be updated when the order is completed.', 'woocommerce' )
+			);
+			$cogs_html .= $provisional_message;
+		}
 
 		/**
 		 * Filter to customize the total Cost of Goods Sold (COGS) value HTML for a given order.
@@ -2627,7 +2640,7 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 		 */
 		return apply_filters(
 			'woocommerce_order_cogs_total_value_html',
-			wc_price( $cogs_total_value, $wc_price_arg ?? array( 'currency' => $this->get_currency() ) ),
+			$cogs_html,
 			$cogs_total_value,
 			$this
 		);
