@@ -51,28 +51,24 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 
 	/**
 	 * Test that can_transition_to_completed method works correctly
+	 *
+	 * @testWith ["pending", true]
+	 *           ["failed", true]
+	 *           ["cancelled", true]
+	 *           ["processing", true]
+	 *           ["on-hold", true]
+	 *           ["completed", false]
+	 *           ["refunded", false]
+	 *           ["trash", false]
 	 */
-	public function test_can_transition_to_completed_method() {
+	public function test_can_transition_to_completed_method( string $status, bool $can_transition ) {
 		$this->enable_cogs_feature();
 
-		$statuses_that_can_complete = array( 'pending', 'failed', 'cancelled', 'processing', 'on-hold' );
-		$statuses_that_cannot_complete = array( 'completed', 'refunded', 'trash' );
-		
-		foreach ( $statuses_that_can_complete as $status ) {
-			$order = new WC_Order();
-			$order->set_status( $status );
-			$order->save();
+		$order = new WC_Order();
+		$order->set_status( $status );
+		$order->save();
 
-			$this->assertTrue( $order->can_transition_to_completed(), "Order with {$status} status should be able to transition to completed" );
-		}
-		
-		foreach ( $statuses_that_cannot_complete as $status ) {
-			$order = new WC_Order();
-			$order->set_status( $status );
-			$order->save();
-
-			$this->assertFalse( $order->can_transition_to_completed(), "Order with {$status} status should NOT be able to transition to completed" );
-		}
+		$this->assertEquals( $can_transition, $order->can_transition_to_completed(), "Order with {$status} status should " . ( $can_transition ? '' : 'NOT ' ) . "be able to transition to completed" );
 	}
 
 	/**
