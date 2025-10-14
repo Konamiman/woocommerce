@@ -47,22 +47,26 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 	}
 
 	/**
-	 * Test that provisional message is shown for non-completed orders
+	 * Test that provisional message is shown for orders that can transition to completed
 	 */
-	public function test_provisional_message_for_non_completed_orders() {
+	public function test_provisional_message_for_orders_that_can_complete() {
 		$this->enable_cogs_feature();
 
-		$order = new WC_Order();
-		$order->set_status( 'pending' );
-		$order->save();
+		$statuses_that_can_complete = array( 'pending', 'failed', 'cancelled', 'processing', 'on-hold' );
+		
+		foreach ( $statuses_that_can_complete as $status ) {
+			$order = new WC_Order();
+			$order->set_status( $status );
+			$order->save();
 
-		$this->add_product_with_cogs_to_order( $order, 50.00, 1 );
-		$order->calculate_cogs_total_value();
-		$order->save();
+			$this->add_product_with_cogs_to_order( $order, 50.00, 1 );
+			$order->calculate_cogs_total_value();
+			$order->save();
 
-		$html = $order->get_cogs_total_value_html();
-		$this->assertStringContainsString( 'This cost value is provisional', $html );
-		$this->assertStringContainsString( 'it will be updated when the order is completed', $html );
+			$html = $order->get_cogs_total_value_html();
+			$this->assertStringContainsString( 'This cost value is provisional', $html, "Provisional message should appear for {$status} status" );
+			$this->assertStringContainsString( 'it will be updated when the order is completed', $html, "Provisional message should appear for {$status} status" );
+		}
 	}
 
 	/**
@@ -82,6 +86,29 @@ class WC_Order_Cogs_Recalculation_Test extends WC_Unit_Test_Case {
 		$html = $order->get_cogs_total_value_html();
 		$this->assertStringNotContainsString( 'This cost value is provisional', $html );
 		$this->assertStringNotContainsString( 'it will be updated when the order is completed', $html );
+	}
+
+	/**
+	 * Test that no provisional message is shown for orders that cannot transition to completed
+	 */
+	public function test_no_provisional_message_for_orders_that_cannot_complete() {
+		$this->enable_cogs_feature();
+
+		$statuses_that_cannot_complete = array( 'refunded', 'trash' );
+		
+		foreach ( $statuses_that_cannot_complete as $status ) {
+			$order = new WC_Order();
+			$order->set_status( $status );
+			$order->save();
+
+			$this->add_product_with_cogs_to_order( $order, 50.00, 1 );
+			$order->calculate_cogs_total_value();
+			$order->save();
+
+			$html = $order->get_cogs_total_value_html();
+			$this->assertStringNotContainsString( 'This cost value is provisional', $html, "Provisional message should NOT appear for {$status} status" );
+			$this->assertStringNotContainsString( 'it will be updated when the order is completed', $html, "Provisional message should NOT appear for {$status} status" );
+		}
 	}
 
 	/**

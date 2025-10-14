@@ -2604,6 +2604,23 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 	}
 
 	/**
+	 * Check if the order can transition to completed status.
+	 *
+	 * @return bool True if the order can transition to completed status.
+	 */
+	protected function can_transition_to_completed(): bool {
+		$statuses_that_can_complete = array(
+			'pending',
+			'failed',
+			'cancelled',
+			'processing',
+			'on-hold',
+		);
+		
+		return in_array( $this->get_status(), $statuses_that_can_complete, true );
+	}
+
+	/**
 	 * Return the HTML to render the total Cost of Goods Sold for the order.
 	 *
 	 * @param array|null $wc_price_arg Arguments to be passed to wc_price, defaults to an array containing only the currency symbol.
@@ -2620,8 +2637,8 @@ abstract class WC_Abstract_Order extends WC_Abstract_Legacy_Order {
 		// Base HTML for the COGS value
 		$cogs_html = wc_price( $cogs_total_value, $wc_price_arg ?? array( 'currency' => $this->get_currency() ) );
 		
-		// Add provisional message for non-completed orders
-		if ( ! $is_completed ) {
+		// Add provisional message for orders that can transition to completed
+		if ( ! $is_completed && $this->can_transition_to_completed() ) {
 			$provisional_message = sprintf(
 				'<br><small style="color: #666; font-style: italic;">%s</small>',
 				__( 'This cost value is provisional, it will be updated when the order is completed.', 'woocommerce' )
