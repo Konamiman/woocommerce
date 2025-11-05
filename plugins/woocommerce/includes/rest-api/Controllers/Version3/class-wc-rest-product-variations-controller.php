@@ -12,6 +12,8 @@ use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductStockStatus;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
+use Automattic\WooCommerce\Internal\Utilities\ProductUtil;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -26,6 +28,7 @@ use Automattic\Jetpack\Constants;
  */
 class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V2_Controller {
 	use CogsAwareRestControllerTrait;
+	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.
@@ -33,6 +36,21 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 	 * @var string
 	 */
 	protected $namespace = 'wc/v3';
+
+	/**
+	 * Product utility instance for version retrieval.
+	 *
+	 * @var ProductUtil|null
+	 */
+	private $product_util = null;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		parent::__construct();
+		$this->register_cache_hooks();
+	}
 
 	/**
 	 * Product statuses to exclude from the query.
@@ -1313,5 +1331,157 @@ class WC_REST_Product_Variations_Controller extends WC_REST_Product_Variations_V
 		}
 
 		return $where;
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Get cache key information for the request.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array|null Array with 'is_collection' (bool) and 'key' (string), or null to skip caching.
+	 */
+	protected function get_cache_key_info( $request ) {
+		$matched_route = $this->get_matched_route( $request );
+
+		if ( ! $matched_route ) {
+			return null;
+		}
+
+		// Generate hash from query params for cache key differentiation.
+		$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+
+		switch ( $matched_route ) {
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
+				// Single variation endpoint.
+				$variation_id = $request->get_param( 'id' );
+				return array(
+					'key'       => 'wc_rest_variation_' . $variation_id . '_' . $query_hash,
+					'entity_id' => $variation_id,
+				);
+
+			case '/wc/v3/' . $this->rest_base . '/generate':
+				// Generate endpoint - skip caching (modifies data).
+				return null;
+
+			case '/wc/v3/' . $this->rest_base:
+				// Variations collection endpoint.
+				$product_id = $request->get_param( 'product_id' );
+				return array(
+					'key' => 'wc_rest_variations_collection_' . $product_id . '_' . $query_hash,
+				);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get filter names to include in cache hash.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array Array of filter names.
+	 */
+	protected function get_cache_hash_filters( WP_REST_Request $request ): array {
+		return array(
+			'woocommerce_rest_prepare_product_variation_object',
+			'rest_prepare_product_variation',
+		);
+	}
+
+	/**
+	 * Extract variation IDs from response data.
+	 *
+	 * For variations, we need to track both the variation ID and parent product ID
+	 * for proper cache invalidation.
+	 *
+	 * @param array $data Response data.
+	 * @return array Variation and parent product IDs.
+	 */
+	protected function extract_entity_ids( array $data ): array {
+		$ids = array();
+
+		if ( isset( $data[0] ) ) {
+			// Collection response
+			foreach ( $data as $item ) {
+				$ids[] = $item['id'];
+
+				// Also track parent product ID for cache invalidation.
+				if ( isset( $item['parent_id'] ) && $item['parent_id'] > 0 ) {
+					$ids[] = $item['parent_id'];
+				}
+			}
+		} else {
+			// Single variation response
+			$ids[] = $data['id'];
+
+			// Also track parent product ID.
+			if ( isset( $data['parent_id'] ) && $data['parent_id'] > 0 ) {
+				$ids[] = $data['parent_id'];
+			}
+		}
+
+		return array_unique( array_filter( $ids ) );
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Register cache-related hooks.
+	 *
+	 * Overrides the trait method to cache ProductUtil instance and handle cache invalidation.
+	 */
+	protected function register_cache_hooks(): void {
+		// Cache the ProductUtil instance for version retrieval.
+		$this->product_util = wc_get_container()->get( ProductUtil::class );
+
+		// Call parent to set up base caching hooks.
+		parent::register_cache_hooks();
+
+		// Register cache invalidation hooks for immediate invalidation when variations change.
+		add_action( 'woocommerce_new_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
+		add_action( 'woocommerce_update_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
+		add_action( 'woocommerce_delete_product_variation', array( $this, 'handle_variation_change' ), 10, 1 );
+	}
+
+	/**
+	 * Get the default entity type for caching.
+	 *
+	 * @return string|null Entity type.
+	 */
+	protected function get_default_entity_type(): ?string {
+		return 'product';
+	}
+
+	/**
+	 * Get the core version of an entity.
+	 *
+	 * @param string $entity_type Entity type.
+	 * @param int    $entity_id   Entity ID.
+	 * @return int|null Entity version (timestamp), or null if not available.
+	 */
+	protected function get_entity_version_core( string $entity_type, int $entity_id ): ?int {
+		return 'product' === $entity_type ? $this->product_util->get_last_modified_date( $entity_id ) : null;
+	}
+
+	/**
+	 * Handle variation change events to invalidate cache.
+	 *
+	 * This ensures immediate cache invalidation when variations are created, updated, or deleted.
+	 * Also invalidates the parent product cache.
+	 *
+	 * @param int $variation_id Variation ID.
+	 */
+	public function handle_variation_change( int $variation_id ): void {
+		$this->invalidate_entity_cache( 'product', $variation_id );
+
+		// Also invalidate parent product cache.
+		$variation = wc_get_product( $variation_id );
+		if ( $variation && $variation->get_parent_id() ) {
+			$this->invalidate_entity_cache( 'product', $variation->get_parent_id() );
+		}
 	}
 }

@@ -9,6 +9,53 @@ namespace Automattic\WooCommerce\Internal\Utilities;
  */
 class ProductUtil {
 	/**
+	 * Get the last modified date for a product.
+	 *
+	 * Returns a timestamp that changes whenever the product is modified.
+	 * Falls back to creation date if modification date isn't available.
+	 * This is used for cache invalidation in the REST API.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return int|null Timestamp of last modification (or creation), or null if product doesn't exist.
+	 */
+	public function get_last_modified_date( int $product_id ): ?int {
+		global $wpdb;
+
+		// Check if we're using the CPT data store (the default).
+		$data_store = \WC_Data_Store::load( 'product' );
+		if ( is_a( $data_store, \WC_Product_Data_Store_CPT::class ) ) {
+			// Query the posts table directly for performance.
+			// Use COALESCE to fall back to post_date_gmt if post_modified_gmt is empty.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$post_date = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COALESCE(NULLIF(post_modified_gmt, '0000-00-00 00:00:00'), post_date_gmt) FROM {$wpdb->posts} WHERE ID = %d",
+					$product_id
+				)
+			);
+
+			if ( ! $post_date ) {
+				// Product doesn't exist.
+				return null;
+			}
+
+			return strtotime( $post_date );
+		}
+
+		// Fallback: Use wc_get_product for custom data stores.
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			return null;
+		}
+
+		// Try modification date first, fall back to creation date.
+		$date_modified = $product->get_date_modified();
+		$date_created = $product->get_date_created();
+		
+		return $date_modified ? $date_modified->getTimestamp() : ( $date_created ? $date_created->getTimestamp() : null );
+	}
+
+	/**
 	 * Delete the transients related to a specific product.
 	 * If the product is a variation, delete the transients for the parent too.
 	 *

@@ -13,6 +13,7 @@ use Automattic\WooCommerce\Enums\ProductStockStatus;
 use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Enums\CatalogVisibility;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -24,6 +25,8 @@ defined( 'ABSPATH' ) || exit;
  * @extends WC_REST_CRUD_Controller
  */
 class WC_REST_Products_V2_Controller extends WC_REST_CRUD_Controller {
+
+	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.
