@@ -14,6 +14,7 @@ use Automattic\WooCommerce\Enums\ProductTaxStatus;
 use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Enums\CatalogVisibility;
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CogsAwareRestControllerTrait;
+use Automattic\WooCommerce\Internal\Traits\RestApiCache;
 use Automattic\WooCommerce\Utilities\I18nUtil;
 
 defined( 'ABSPATH' ) || exit;
@@ -27,6 +28,7 @@ defined( 'ABSPATH' ) || exit;
 class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 
 	use CogsAwareRestControllerTrait;
+	use RestApiCache;
 
 	/**
 	 * Endpoint namespace.
@@ -34,6 +36,14 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 	 * @var string
 	 */
 	protected $namespace = 'wc/v3';
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		parent::__construct();
+		$this->register_cache_hooks();
+	}
 
 	/**
 	 * The value of the 'search_sku' argument if present.
@@ -2148,5 +2158,95 @@ class WC_REST_Products_Controller extends WC_REST_Products_V2_Controller {
 		$this->processed_attachment_ids_for_request = array();
 
 		return $response;
+	}
+
+	/* -------------------------------------------------------------------------
+	 * REST API Caching Implementation
+	 * ------------------------------------------------------------------------- */
+
+	/**
+	 * Get cache key information for the request.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array|null Cache key info or null to skip caching.
+	 */
+	protected function get_cache_key_info( $request ) {
+		$matched_route = $this->get_matched_route( $request );
+
+		if ( ! $matched_route ) {
+			return null;
+		}
+
+		// Generate hash from query params for cache key differentiation.
+		$query_hash = md5( wp_json_encode( $request->get_query_params() ) );
+
+		switch ( $matched_route ) {
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)':
+				// Single product endpoint.
+				$product_id = $request->get_param( 'id' );
+				return array(
+					'key'       => 'wc_rest_product_' . $product_id . '_' . $query_hash,
+					'entity_id' => $product_id,
+				);
+
+			case '/wc/v3/' . $this->rest_base . '/(?P<id>[\d]+)/duplicate':
+				// Duplicate endpoint - skip caching (creates new product).
+				return null;
+
+			case '/wc/v3/' . $this->rest_base:
+			case '/wc/v3/' . $this->rest_base . '/suggested-products':
+				// Collection endpoints.
+				return array(
+					'key' => 'wc_rest_products_collection_' . md5( $matched_route . $query_hash ),
+				);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get filter names to include in cache hash.
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return array Filter names.
+	 */
+	protected function get_cache_hash_filters( $request ) {
+		return array(
+			'woocommerce_rest_prepare_product_object',
+			'rest_prepare_product',
+			'woocommerce_rest_product_object_query',
+		);
+	}
+
+	/**
+	 * Remove non-deterministic fields from data for ETag generation.
+	 *
+	 * @param array $data Response data.
+	 * @return array Cleaned data.
+	 */
+	protected function remove_non_deterministic_fields( $data ) {
+		if ( $this->is_collection( $data ) ) {
+			// Collection response - remove related_ids from each product.
+			$clean_data = array();
+			foreach ( $data as $key => $product ) {
+				if ( isset( $product['related_ids'] ) ) {
+					$clean_product = $product;
+					unset( $clean_product['related_ids'] );
+					$clean_data[ $key ] = $clean_product;
+				} else {
+					$clean_data[ $key ] = $product;
+				}
+			}
+			return $clean_data;
+		}
+
+		// Single product response - remove related_ids.
+		if ( isset( $data['related_ids'] ) ) {
+			$clean_data = $data;
+			unset( $clean_data['related_ids'] );
+			return $clean_data;
+		}
+
+		return $data;
 	}
 }
