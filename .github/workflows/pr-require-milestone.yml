@@ -49,10 +49,10 @@ jobs:
 
             // Parse checkbox states
             const nextVersionMatch = body.match(/- \[([ xX])\].*\*\*.*next WooCommerce version.*\*\*/);
-            const patchVersionMatch = body.match(/- \[([ xX])\].*\*\*previous version patch\*\*/);
+            const patchVersionMatch = body.match(/- \[([ xX])\].*\*\*current WooCommerce version\*\*/);
 
             if (!nextVersionMatch || !patchVersionMatch) {
-                core.setFailed('Milestone selection checkboxes not found or modified. Please restore the original checkbox format from the PR template.');
+                core.setFailed('Milestone selection checkboxes not found or modified. Please restore the original checkbox format from the PR template, or manually assign a milestone.');
                 return;
             }
 
@@ -69,5 +69,5 @@ jobs:
                 return;
             }
 
-            const selection = nextVersionChecked ? 'next WooCommerce version' : 'previous version patch';
+            const selection = nextVersionChecked ? 'next WooCommerce version' : 'current version patch';
             core.info(`Milestone selection: "${selection}". Milestone will be assigned on merge.`);

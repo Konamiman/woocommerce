@@ -55,13 +55,14 @@ Using the [WooCommerce Testing Instructions Guide](https://github.com/woocommerc
 ### Milestone
 
 <!-- DO NOT remove or modify this section (other than to check one of the boxes). -->
+
 <!-- milestone-target-selection -->
 - [ ] Assign milestone for the **[next WooCommerce version](https://github.com/woocommerce/woocommerce/blob/trunk/plugins/woocommerce/woocommerce.php#L6)**
-- [ ] Assign milestone for a **previous version patch**
+- [ ] Assign milestone for the **current WooCommerce version** (for point releases)
 <!-- /milestone-target-selection -->
 
 > **Note:** Select one option above. The milestone will be automatically assigned when merged.
-> Alternatively, you can manually assign a milestone to skip this selection.
+> Alternatively, you can manually assign a milestone before the merge.
 
 
 ### Changelog entry
