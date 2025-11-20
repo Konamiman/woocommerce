@@ -1,0 +1,122 @@
+name: 'Auto-assign milestone on merge'
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [trunk]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  assign-milestone:
+    name: 'Assign milestone based on selection'
+    if: github.event.pull_request.merged == true && github.event.pull_request.milestone == null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign milestone
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const body = context.payload.pull_request.body || '';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const baseRef = context.payload.pull_request.base.ref;
+
+            // Parse checkbox selections
+            const nextVersionMatch = body.match(/- \[([ xX])\].*\*\*.*next WooCommerce version.*\*\*/);
+            const patchVersionMatch = body.match(/- \[([ xX])\].*\*\*current WooCommerce version\*\*/);
+
+            if (!nextVersionMatch || !patchVersionMatch) {
+                core.setFailed('Milestone selection checkboxes not found in PR description. Cannot assign milestone.');
+                return;
+            }
+
+            const nextVersionChecked = nextVersionMatch[1].toLowerCase() === 'x';
+            const patchVersionChecked = patchVersionMatch[1].toLowerCase() === 'x';
+
+            if (nextVersionChecked && patchVersionChecked) {
+                core.setFailed('Both milestone options are selected. Cannot determine which milestone to assign.');
+                return;
+            }
+
+            if (!nextVersionChecked && !patchVersionChecked) {
+                core.setFailed('No milestone option selected. Cannot assign milestone.');
+                return;
+            }
+
+            const isPatchRelease = patchVersionChecked;
+
+            // Get current version from woocommerce.php via API
+            core.info(`Fetching woocommerce.php from ${owner}/${repo}@${baseRef}`);
+            const { data: fileData } = await github.rest.repos.getContent({
+              owner: owner,
+              repo: repo,
+              path: 'plugins/woocommerce/includes/class-woocommerce.php',
+              ref: baseRef
+            });
+
+            const wcFileContent = Buffer.from(fileData.content, 'base64').toString('utf8');
+            const versionMatch = wcFileContent.match(/\$version\s*=\s*'([^']+)'/);
+            if (!versionMatch) {
+              core.warning(`Could not parse WooCommerce version from class-woocommerce.php`);
+              return;
+            }
+
+            // Remove -dev suffix and normalize to X.Y.0 format
+            let version = versionMatch[1].replace(/-dev$/, '');
+            const versionParts = version.split('.').map(Number);
+            const major = versionParts[0];
+            const minor = versionParts[1];
+
+            core.info(`Parsed version: ${versionMatch[1]} -> ${major}.${minor}`);
+
+            let targetMilestone;
+            if (isPatchRelease) {
+              // Current version: X.(Y-1).0 or (X-1).9.0
+              if (minor > 0) {
+                targetMilestone = `${major}.${minor - 1}.0`;
+              } else {
+                targetMilestone = `${major - 1}.9.0`;
+              }
+            } else {
+              // Next main version
+              targetMilestone = `${major}.${minor}.0`;
+            }
+
+            core.info(`PR #${prNumber} targets ${isPatchRelease ? 'current version patch' : 'next main release'}`);
+            core.info(`Looking for milestone: ${targetMilestone}`);
+
+            // Find milestone
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: owner,
+              repo: repo,
+              state: 'open'
+            });
+
+            const milestone = milestones.find(m => m.title === targetMilestone);
+            if (!milestone) {
+              const warningMessage = `Could not find milestone "${targetMilestone}". Please assign a milestone manually.\n\nAvailable open milestones: ${milestones.map(m => m.title).join(', ')}`;
+
+              await github.rest.issues.createComment({
+                owner: owner,
+                repo: repo,
+                issue_number: prNumber,
+                body: `⚠️ ${warningMessage}`
+              });
+
+              core.warning(warningMessage);
+              return;
+            }
+
+            // Assign milestone
+            await github.rest.issues.update({
+              owner: owner,
+              repo: repo,
+              issue_number: prNumber,
+              milestone: milestone.number
+            });
+
+            core.info(`Successfully assigned milestone "${targetMilestone}" to PR #${prNumber}`);
