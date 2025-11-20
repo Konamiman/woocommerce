@@ -1,0 +1,97 @@
+name: 'Auto-assign milestone on merge'
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [trunk]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  assign-milestone:
+    name: 'Assign milestone based on selection'
+    if: github.event.pull_request.merged == true && github.event.pull_request.milestone == null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to get version
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            plugins/woocommerce/includes/class-woocommerce.php
+
+      - name: Assign milestone
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const prNumber = context.payload.pull_request.number;
+            const body = context.payload.pull_request.body || '';
+
+            // Parse checkbox selection
+            const patchVersionMatch = body.match(/- \[([xX])\].*\*\*previous version patch\*\*/);
+            const isPatchRelease = !!patchVersionMatch;
+
+            // Get current version from woocommerce.php
+            const wcFile = fs.readFileSync('plugins/woocommerce/includes/class-woocommerce.php', 'utf8');
+            const versionMatch = wcFile.match(/\$version\s*=\s*'([^']+)'/);
+            if (!versionMatch) {
+              core.warning(`Could not parse WooCommerce version from class-woocommerce.php`);
+              return;
+            }
+
+            // Remove -dev suffix and normalize to X.Y.0 format
+            let version = versionMatch[1].replace(/-dev$/, '');
+            const versionParts = version.split('.').map(Number);
+            const major = versionParts[0];
+            const minor = versionParts[1];
+
+            let targetMilestone;
+            if (isPatchRelease) {
+              // Previous version: X.(Y-1).0 or (X-1).9.0
+              if (minor > 0) {
+                targetMilestone = `${major}.${minor - 1}.0`;
+              } else {
+                targetMilestone = `${major - 1}.9.0`;
+              }
+            } else {
+              // Next main version
+              targetMilestone = `${major}.${minor}.0`;
+            }
+
+            core.info(`PR #${prNumber} targets ${isPatchRelease ? 'patch release' : 'next main release'}`);
+            core.info(`Looking for milestone: ${targetMilestone}`);
+
+            // Find milestone
+            const { data: milestones } = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            const milestone = milestones.find(m => m.title === targetMilestone);
+            if (!milestone) {
+              const warningMessage = `Could not find milestone "${targetMilestone}". Please assign a milestone manually.\n\nAvailable open milestones: ${milestones.map(m => m.title).join(', ')}`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `⚠️ ${warningMessage}`
+              });
+
+              core.warning(warningMessage);
+              return;
+            }
+
+            // Assign milestone
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              milestone: milestone.number
+            });
+
+            core.info(`Successfully assigned milestone "${targetMilestone}" to PR #${prNumber}`);
