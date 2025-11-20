@@ -21,9 +21,11 @@ jobs:
           script: |
             const prNumber = context.payload.pull_request.number;
             const body = context.payload.pull_request.body || '';
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+            const owner = context.payload.repository.owner.login;
+            const repo = context.payload.repository.name;
             const baseRef = context.payload.pull_request.base.ref;
+
+            core.info(`Repository: ${owner}/${repo}, Base ref: ${baseRef}`);
 
             // Parse checkbox selections
             const nextVersionMatch = body.match(/- \[([ xX])\].*\*\*.*next WooCommerce version.*\*\*/);
