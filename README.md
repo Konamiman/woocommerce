@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # WooCommerce Monorepo
+=======
+# WooCommerce Monorepo  
+>>>>>>> df32eb8470 (Test change 9 (#106))
 
 ![WooCommerce](https://woocommerce.com/wp-content/themes/woo/images/logo-woo@2x.png)
 
