@@ -226,7 +226,7 @@ jobs:
     needs:
       - trigger-upcoming-code-freeze-events
       - check-upcoming-release-events
-    if: ${{ needs.check-upcoming-release-events.outputs.should-trigger-webhook == 'true' }}
+    if: false
     runs-on: ${{ ( github.repository == 'woocommerce/woocommerce' && 'blacksmith-2vcpu-ubuntu-2404' ) || 'ubuntu-latest' }}
     env:
       RELEASE_LEAD_GOOGLE_LOGIN: ${{ needs.trigger-upcoming-code-freeze-events.outputs.release-lead-google-login }}
