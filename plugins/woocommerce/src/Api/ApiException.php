@@ -54,3 +54,5 @@ class ApiException extends \RuntimeException {
 		return $this->getCode();
 	}
 }
+
+//Meh.
