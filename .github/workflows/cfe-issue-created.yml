@@ -1,0 +1,37 @@
+name: Notify of CFE issue created
+on:
+  issues:
+    types:
+      - labeled
+jobs:
+  add-comment:
+    if: github.event.label.name == 'code freeze exception'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Verify if user is in the relevant organization
+        id: user_org_verify
+        uses: tspascoal/get-user-teams-membership@v3
+        with:
+          username: ${{ github.actor }}
+          organization: 'woocommerce'
+          team: 'Automatticians'
+          GITHUB_TOKEN: ${{ secrets.GH_ORG_READ_TOKEN }}
+      - name: Send Slack message
+        if: ${{ steps.user_org_verify.outputs.isTeamMember  == 'true' }}
+        uses: archive/github-actions-slack@d9dae40827adf93bddf939db6552d1e392259d7d
+        id: notify-slack
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.SLACK_TOKEN }}
+          slack-channel: general
+          slack-text: |
+            CFE created!
+            ${{ toJson(github) }}
+          slack-optional-unfurl_links: false
+          slack-optional-unfurl_media: false
+      - name: Close the issue
+        if: ${{ steps.user_org_verify.outputs.isTeamMember  != 'true' }}
+        run: gh issue close --comment "Closing issue. **Only WooCommerce employees can open CFEs.** _We probably need a more polite message here._" "https://github.com/${{ github.repository }}/issues/${{ github.event.issue.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
