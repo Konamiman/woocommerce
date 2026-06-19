@@ -2682,3 +2682,7 @@ function _wc_delete_transients( $transients ) {
 		}
 	}
 }
+
+function foobar() {
+	return 34;
+}
