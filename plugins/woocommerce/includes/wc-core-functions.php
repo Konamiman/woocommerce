@@ -2678,7 +2678,7 @@ function _wc_delete_transients( $transients ) {
 				sprintf( 'Exception when deleting transients: %s', $e->getMessage() ),
 				array( 'source' => '_wc_delete_transients' )
 			);
-			return false;
+			return true;
 		}
 	}
 }
